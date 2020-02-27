@@ -1,0 +1,12 @@
+LIBRARY geodesic.xll
+
+EXPORTS
+	xlAddInManagerInfo12
+	xlAutoOpen
+	xlAutoClose
+	xlAutoAdd
+	xlAutoRemove
+	xlAutoFree12
+	libraryVersion
+	geodesicForward
+	geodesicInverse
