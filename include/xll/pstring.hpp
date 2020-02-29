@@ -30,7 +30,7 @@ template <class CharT, std::size_t N>
 struct basic_pstring_literal_impl
 {
     static_assert(N < std::numeric_limits<CharT>::max(),
-        "String length exceeds Excel 12 limit");
+        "string length exceeds Excel 12 limit");
 
     using value_type = CharT;
     using size_type = std::make_unsigned_t<CharT>;
@@ -186,7 +186,7 @@ namespace xll {
 template <class CharT>
 struct basic_pstring
 {
-    static_assert(sizeof(CharT) <= sizeof(wchar_t), "Unsupported character type.");
+    static_assert(sizeof(CharT) <= sizeof(wchar_t), "unsupported character type");
 
     using xltype =
       std::conditional_t<
@@ -416,7 +416,7 @@ public:
 using pstring = basic_pstring<char>;
 using wpstring = basic_pstring<wchar_t>;
 
-static_assert(sizeof(pstring) == sizeof(void *));
-static_assert(sizeof(wpstring) == sizeof(void *));
+static_assert(sizeof(pstring) == sizeof(void *), "invalid pstring size");
+static_assert(sizeof(wpstring) == sizeof(void *), "invalid wpstring size");
 
 } // namespace xll

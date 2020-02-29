@@ -37,6 +37,18 @@ constexpr int test_constexpr()
     return variant12(value<tag::xlint>(555)).get<tag::xlint>().w;
 }
 
+const char * __stdcall test_function(xll::variant12 *)
+{
+    return "test";
+}
+
+void test_register()
+{
+    xll::function_options opts;
+    xll::attribute_set<tag::thread_safe> attrs;
+    xll::register_function(test_function, L"test_function", L"TEST.FUNCTION", opts, attrs);
+}
+
 void test_pstring()
 {
     using namespace std::string_literals;
@@ -68,11 +80,11 @@ void test_pstring()
     
     std::cout << "*** wpstring from std::string\n";
     wpstring ps3(std::string("CCC"));
-    std::cout << ps3 << " " << ps1.size() << "\n";
+    std::wcout << ps3 << " " << ps1.size() << "\n";
     
     std::cout << "*** wpstring from std::wstring\n";
     wpstring ps4(std::wstring(L"DDD"));
-    std::cout << ps4 << " " << ps1.size() << "\n";
+    std::wcout << ps4 << " " << ps1.size() << "\n";
 
     fmt::print("{}\n", (std::string)ps1);
 

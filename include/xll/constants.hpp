@@ -74,23 +74,7 @@ using xlsref    = xltype_t<xltypeSRef>;
 using xlint     = xltype_t<xltypeInt>;
 using xlbigdata = xltype_t<xltypeBigData>;
 
-struct asynchronous {};
-struct volatile_udf {};
-struct cluster_safe {};
-struct thread_safe {};
-
 } // namespace tag
-
-template <class T> struct attribute;
-template <> struct attribute<tag::asynchronous> {};
-template <> struct attribute<tag::volatile_udf> {};
-template <> struct attribute<tag::cluster_safe> {};
-template <> struct attribute<tag::thread_safe> {};
-
-using asynchronous = attribute<tag::asynchronous>;
-using volatile_udf = attribute<tag::volatile_udf>;
-using cluster_safe = attribute<tag::cluster_safe>;
-using thread_safe = attribute<tag::thread_safe>;
 
 // 
 // Flow data types

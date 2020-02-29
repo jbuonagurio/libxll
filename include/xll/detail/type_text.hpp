@@ -15,10 +15,11 @@
 
 #include <xll/config.hpp>
 
-#include <xll/detail/type_traits.hpp>
+#include <xll/attributes.hpp>
 #include <xll/fp12.hpp>
 #include <xll/xloper12.hpp>
 #include <xll/pstring.hpp>
+#include <xll/detail/type_traits.hpp>
 
 #include <boost/mp11/list.hpp>
 #include <boost/mp11/algorithm.hpp>
@@ -141,66 +142,70 @@ struct type_text_arg<T, std::enable_if_t<std::is_same_v<T, const wchar_t *>>> {
 template <class A>
 struct attribute_text_arg;
 
-// Function Attributes
+// Function attributes
 template <>
-struct attribute_text_arg<cluster_safe> {
+struct attribute_text_arg<tag::cluster_safe> {
     static constexpr std::array<wchar_t, 1> value = { L'&' };
 };
 
 template <>
-struct attribute_text_arg<volatile_udf> {
+struct attribute_text_arg<tag::volatile_> {
     static constexpr std::array<wchar_t, 1> value = { L'!' };
 };
 
 template <>
-struct attribute_text_arg<thread_safe> {
+struct attribute_text_arg<tag::thread_safe> {
     static constexpr std::array<wchar_t, 1> value = { L'$' };
 };
 
-// Get a pxTypeText wchar array (null-terminated) for a callable type.
-// Concatenates the pxTypeText wchar arrays for the return type and arguments
+// Get a pxTypeText wchar array for a callable type. Concatenates the
+// pxTypeText wchar arrays for the return type, arguments and attributes
 // at compile-time using tuples.
 //
 // Requires compiler support for std::tuple_cat with std::array, and C++17
 // for std::apply and std::invoke_result_t.
 //
-// TODO:
-// - Ensure that arguments are const qualified.
-// - Async
-//   - One 'X' parameter which will store the asynchronous call handle (xlTypeBigData)
+// Attributes:
+// - Asynchronous
 //   - Cannot be combined with Cluster Safe
+//   - One 'X' parameter to store the async call handle (xlTypeBigData)
 //   - void return type, '>'
-//   - separate from variant12 - should be its own type ('xlhandle'?).
-// - Cluster safe
+// - Cluster Safe
+//   - Cannot be combined with Asynchronous
 //   - No XLOPER12 arguments that support range references (type 'U').
 //   - Add '&' to end of type text
 // - Volatile
 //   - Add '!' to end of type text
-// - Thread safe
+// - Thread Safe
 //   - Add '$' to end of type text
 
-template<class Result, class... Args>
-constexpr auto type_text_impl()
+template<class Result, class... Args, class... Tags>
+constexpr auto type_text_impl(attribute_set<Tags...>)
 {
     using namespace boost::mp11;
 
     static_assert(!mp_any<std::is_void<Args>...>::value,
-        "Arguments cannot be void");
+        "arguments cannot be void");
     
     using async_handle_count = mp_count<mp_list<Args...>, handle12 *>;
     static_assert(mp_less<async_handle_count, mp_size_t<2>>::value,
-        "Multiple async handles in argument list");
+        "multiple async handles in argument list");
 
-    using has_async_handle = mp_to_bool<async_handle_count>;
+    using is_asynchronous = mp_to_bool<async_handle_count>;
     using has_void_return = std::is_void<Result>;
-    static_assert(!std::is_same_v<has_async_handle, has_void_return>,
-        "Async functions must have void return type");
+    static_assert(!std::is_same_v<is_asynchronous, has_void_return>,
+        "async functions must have void return type");
         
+    using is_cluster_safe = mp_contains<mp_list<Tags...>, tag::cluster_safe>;
+    static_assert(std::is_same_v<is_asynchronous, is_cluster_safe>,
+        "async functions cannot be cluster-safe");
+
     // Construct tuple using std::tuple_cat specialization for std:array.
     constexpr auto tuple = std::tuple_cat(
-        type_text_arg<extern_type_t<Result>>::value,
-        type_text_arg<extern_type_t<Args>>::value...);
-        //attribute_text_arg<Attrs>::value...);
+        type_text_arg<extern_c_type_t<Result>>::value,
+        type_text_arg<extern_c_type_t<Args>>::value...,
+        attribute_text_arg<Tags>::value...
+    );
 
     // Construct wchar array from the flat tuple.
     constexpr auto make_array = [](auto&& ...x) {
@@ -212,32 +217,32 @@ constexpr auto type_text_impl()
 
 // Overloads for various calling conventions and attributes.
 
-template<class F, class... Args>
-constexpr auto type_text(F(__cdecl *)(Args...))
+template<class F, class... Args, class... Tags>
+constexpr auto type_text(F(__cdecl *)(Args...), attribute_set<Tags...> attrs)
 {
     using result_t = std::invoke_result_t<F(Args...), Args...>;
-    return detail::type_text_impl<result_t, Args...>();
+    return detail::type_text_impl<result_t, Args...>(attrs);
 }
 
-template<class F, class... Args>
-constexpr auto type_text(F (__stdcall *)(Args...))
+template<class F, class... Args, class... Tags>
+constexpr auto type_text(F (__stdcall *)(Args...), attribute_set<Tags...> attrs)
 {
     using result_t = std::invoke_result_t<F(Args...), Args...>;
-    return detail::type_text_impl<result_t, Args...>();
+    return detail::type_text_impl<result_t, Args...>(attrs);
 }
 
-template<class F, class... Args>
-constexpr auto type_text(F (__fastcall *)(Args...))
+template<class F, class... Args, class... Tags>
+constexpr auto type_text(F (__fastcall *)(Args...), attribute_set<Tags...> attrs)
 {
     using result_t = std::invoke_result_t<F(Args...), Args...>;
-    return detail::type_text_impl<result_t, Args...>();
+    return detail::type_text_impl<result_t, Args...>(attrs);
 }
 
-template<class F, class... Args>
-constexpr auto type_text(F (__vectorcall *)(Args...))
+template<class F, class... Args, class... Tags>
+constexpr auto type_text(F (__vectorcall *)(Args...), attribute_set<Tags...> attrs)
 {
     using result_t = std::invoke_result_t<F(Args...), Args...>;
-    return detail::type_text_impl<result_t, Args...>();
+    return detail::type_text_impl<result_t, Args...>(attrs);
 }
 
 } // namespace detail

@@ -2,7 +2,8 @@
     "cmake.configureOnOpen": true,
     "cmake.configureSettings": {
         "VCPKG_TARGET_TRIPLET": "x86-windows-static",
-        "CMAKE_VERBOSE_MAKEFILE": "ON"
+        "CMAKE_VERBOSE_MAKEFILE": "ON",
+        "BUILD_TESTING": "ON"
     },
     "cmake.buildDirectory": "${workspaceRoot}/build",
     "C_Cpp.default.cppStandard": "c++17",

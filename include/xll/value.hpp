@@ -56,7 +56,6 @@ struct value<tag::xlnum> : tag::xlnum
 
     double num;
 };
-static_assert(sizeof(value<tag::xlnum>) == 8);
 
 template <>
 struct value<tag::xlstr> : public wpstring

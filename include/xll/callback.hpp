@@ -34,9 +34,9 @@ namespace xll {
 template <class R, class V, std::size_t N>
 inline XLRET Excel12v(int xlfn, R *result, std::array<V*, N>& opers, std::size_t count = N)
 {
-    static_assert(N <= 255, "Parameter count exceeds Excel 12 limit");
-    static_assert(std::is_base_of_v<detail::tagged_union, V>, "Invalid operand type");
-    static_assert(std::is_base_of_v<detail::tagged_union, R>, "Invalid result type");
+    static_assert(N <= 255, "parameter count exceeds Excel 12 limit");
+    static_assert(std::is_base_of_v<detail::tagged_union, V>, "invalid operand type");
+    static_assert(std::is_base_of_v<detail::tagged_union, R>, "invalid result type");
 
     auto pfn = detail::MdCallBack12<R, V>();
     XLL_ASSERT(pfn != nullptr);

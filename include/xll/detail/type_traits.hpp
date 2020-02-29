@@ -38,7 +38,7 @@ using safe_underlying_type_t = typename safe_underlying_type<T>::type;
 // implemented using a pointer variable.
 
 template <class T>
-struct extern_type {
+struct extern_c_type {
 private:
   using U =
     std::conditional_t<
@@ -56,7 +56,7 @@ public:
 };
 
 template <class T>
-using extern_type_t = typename extern_type<T>::type;
+using extern_c_type_t = typename extern_c_type<T>::type;
 
 } // namespace detail
 } // namespace xll

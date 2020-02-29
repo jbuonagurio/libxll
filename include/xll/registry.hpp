@@ -9,16 +9,13 @@
 
 #include <xll/config.hpp>
 
+#include <xll/attributes.hpp>
 #include <xll/constants.hpp>
 #include <xll/callback.hpp>
 #include <xll/functions.hpp>
 #include <xll/xloper12.hpp>
 #include <xll/detail/type_text.hpp>
 #include <xll/log.hpp>
-
-#include <boost/mp11/list.hpp>
-#include <boost/mp11/set.hpp>
-#include <boost/mp11/function.hpp>
 
 #include <algorithm>
 #include <array>
@@ -41,23 +38,6 @@ struct function_options
     std::wstring help_topic;
     std::wstring function_help;
     std::vector<std::wstring> argument_help;
-};
-
-template <class ...>
-struct function_attributes;
-
-template <class ... Ts>
-struct function_attributes<attribute<Ts>...>
-{
-    using list = boost::mp11::mp_list<attribute<Ts>...>;
-
-    static_assert(boost::mp11::mp_is_set<list>::value,
-      "Attributes must be unique");
-    
-    static_assert(!boost::mp11::mp_all<
-      boost::mp11::mp_set_contains<list, asynchronous>,
-      boost::mp11::mp_set_contains<list, cluster_safe>>::value,
-      "Asynchronous and cluster-safe attributes are not compatible");
 };
 
 struct registry
@@ -99,9 +79,10 @@ public:
 //     9    pxFunctionHelp         xltypeStr   
 //    10    pxArgumentHelp[245]    xltypeStr   
 
-template <class F>
+template <class F, class... Tags>
 inline double register_function(F ptr, const std::wstring& dll_alias,
-    const std::wstring& function_text, const function_options& opts = function_options())
+    const std::wstring& function_text, const function_options& opts = {},
+    const attribute_set<Tags...>& attrs = {})
 {
     std::array<variant12, 255> args;
 
@@ -111,7 +92,7 @@ inline double register_function(F ptr, const std::wstring& dll_alias,
     });
 
     args[1].emplace<tag::xlstr>(dll_alias);
-    args[2].emplace<tag::xlstr>(make_wpstring_array(detail::type_text(ptr)));
+    args[2].emplace<tag::xlstr>(make_wpstring_array(detail::type_text(ptr, attrs)));
     args[3].emplace<tag::xlstr>(function_text);
     args[4].emplace<tag::xlstr>(opts.argument_text);
     args[5].emplace<tag::xlint>(opts.macro_type);
