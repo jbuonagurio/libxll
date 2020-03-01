@@ -36,12 +36,6 @@ struct basic_pstring_literal_impl
     using size_type = std::make_unsigned_t<CharT>;
     using difference_type = std::make_signed_t<CharT>;
 
-    using xltype =
-      std::conditional_t<
-        sizeof(CharT) == sizeof(wchar_t),
-        tag::xlstr::xltype,
-        void>;
-
 protected:
     const CharT data_[1 + N];
 
@@ -187,12 +181,6 @@ template <class CharT>
 struct basic_pstring
 {
     static_assert(sizeof(CharT) <= sizeof(wchar_t), "unsupported character type");
-
-    using xltype =
-      std::conditional_t<
-        sizeof(CharT) == sizeof(wchar_t),
-        tag::xlstr::xltype,
-        void>;
     
     using value_type = CharT;
     using size_type = std::make_unsigned_t<CharT>;

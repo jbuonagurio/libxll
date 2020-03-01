@@ -91,22 +91,22 @@ inline double register_function(F ptr, const std::wstring& dll_alias,
         Excel12(xlGetName, &args[0]);
     });
 
-    args[1].emplace<tag::xlstr>(dll_alias);
-    args[2].emplace<tag::xlstr>(make_wpstring_array(detail::type_text(ptr, attrs)));
-    args[3].emplace<tag::xlstr>(function_text);
-    args[4].emplace<tag::xlstr>(opts.argument_text);
-    args[5].emplace<tag::xlint>(opts.macro_type);
-    args[6].emplace<tag::xlstr>(opts.category);
-    args[7].emplace<tag::xlstr>(opts.shortcut_text);
-    args[8].emplace<tag::xlstr>(opts.help_topic);
+    args[1].emplace<xlstr>(dll_alias);
+    args[2].emplace<xlstr>(make_wpstring_array(detail::type_text(ptr, attrs)));
+    args[3].emplace<xlstr>(function_text);
+    args[4].emplace<xlstr>(opts.argument_text);
+    args[5].emplace<xlint>(opts.macro_type);
+    args[6].emplace<xlstr>(opts.category);
+    args[7].emplace<xlstr>(opts.shortcut_text);
+    args[8].emplace<xlstr>(opts.help_topic);
     
     std::size_t nargs = 9;
     
     if (!opts.function_help.empty()) {
-        args[9].emplace<tag::xlstr>(opts.function_help);
+        args[9].emplace<xlstr>(opts.function_help);
         nargs++;
         for (std::size_t i = 0; i < std::min((std::size_t)245, opts.argument_help.size()); ++i) {
-            args[10 + i].emplace<tag::xlstr>(opts.argument_help[i]);
+            args[10 + i].emplace<xlstr>(opts.argument_help[i]);
             nargs++;
         }
     }
@@ -123,7 +123,7 @@ inline double register_function(F ptr, const std::wstring& dll_alias,
         return 0.0;
     }
 
-    double id = static_cast<double>(idvar.get<tag::xlnum>());
+    double id = static_cast<double>(idvar.get<xlnum>());
     registry::add(ptr, id);
     return id;
 }

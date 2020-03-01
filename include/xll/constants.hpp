@@ -50,32 +50,6 @@ enum XLBIT : uint32_t {
     xlbitDLLFree  = 0x4000
 };
 
-//
-// XLTYPE and UDF attribute tags
-//
-
-namespace tag {
-
-template <XLTYPE I>
-struct xltype_t {
-    using xltype = std::integral_constant<XLTYPE, I>;
-};
-
-using xlnum     = xltype_t<xltypeNum>;
-using xlstr     = xltype_t<xltypeStr>;
-using xlbool    = xltype_t<xltypeBool>;
-using xlref     = xltype_t<xltypeRef>;
-using xlerr     = xltype_t<xltypeErr>;
-using xlflow    = xltype_t<xltypeFlow>;
-using xlmulti   = xltype_t<xltypeMulti>;
-using xlmissing = xltype_t<xltypeMissing>;
-using xlnil     = xltype_t<xltypeNil>;
-using xlsref    = xltype_t<xltypeSRef>;
-using xlint     = xltype_t<xltypeInt>;
-using xlbigdata = xltype_t<xltypeBigData>;
-
-} // namespace tag
-
 // 
 // Flow data types
 //

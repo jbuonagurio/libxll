@@ -35,7 +35,7 @@ inline int stack_size()
     XLRET rc = Excel12(xlStack, &result);
     if (rc != XLRET::xlretSuccess && result.xltype() != xltypeInt)
         return 0;
-    return static_cast<int>(result.get<tag::xlint>());
+    return static_cast<int>(result.get<xlint>());
 }
 
 /// Converts one type of XLOPER to another, if possible.
@@ -45,7 +45,7 @@ inline std::unique_ptr<variant12> coerce(variant12& source)
 {
     constexpr int flags = (Ts | ...);
     auto result = std::make_unique<variant12>();
-    auto result_types = std::make_unique<xloper12<tag::xlint>>(flags);
+    auto result_types = std::make_unique<xloper12<xlint>>(flags);
     Excel12(xlCoerce, result.get(), &source, result_types.get());
     return std::move(result);
 }
@@ -55,8 +55,8 @@ inline std::unique_ptr<variant12> coerce(variant12& source)
 /// \param[in] type Dialog type: 1 = OK/Cancel, 2 = Info, 3 = Warning
 inline XLRET message_box(const std::wstring& text, int type = 2)
 {
-    auto arg1 = std::make_unique<xloper12<tag::xlint>>(type);
-    auto arg2 = std::make_unique<xloper12<tag::xlstr>>(text);
+    auto arg1 = std::make_unique<xloper12<xlint>>(type);
+    auto arg2 = std::make_unique<xloper12<xlstr>>(text);
     return Excel12(xlcAlert, nullptr, arg1.get(), arg2.get());
 }
 
@@ -64,30 +64,30 @@ inline XLRET message_box(const std::wstring& text, int type = 2)
 /// \param[in] text The text to be displayed.
 inline XLRET status_bar(const std::wstring& text)
 {
-    auto arg1 = std::make_unique<xloper12<tag::xlbool>>(true);
-    auto arg2 = std::make_unique<xloper12<tag::xlstr>>(text);
+    auto arg1 = std::make_unique<xloper12<xlbool>>(true);
+    auto arg2 = std::make_unique<xloper12<xlstr>>(text);
     return Excel12(xlcMessage, nullptr, arg1.get(), arg2.get());
 }
 
 /// Return the result of an asynchronous UDF.
 /// \sa https://docs.microsoft.com/en-us/office/client-developer/excel/xlasyncreturn
-inline bool async_return(const xloper12<tag::xlbigdata>& handle, const variant12& value)
+inline bool async_return(const xloper12<xlbigdata>& handle, const variant12& value)
 {
-    auto arg1 = std::make_unique<xloper12<tag::xlbigdata>>(handle);
+    auto arg1 = std::make_unique<xloper12<xlbigdata>>(handle);
     auto arg2 = std::make_unique<variant12>(value);
     variant12 result;
     XLRET rc = Excel12(xlAsyncReturn, &result, arg1.get(), arg2.get());
     if (rc != XLRET::xlretSuccess && result.xltype() != xltypeBool)
         return false;
-    return static_cast<bool>(result.get<tag::xlbool>());
+    return static_cast<bool>(result.get<xlbool>());
 }
 
 /// Registers an event handler function for an asynchronous UDF.
 /// \sa https://docs.microsoft.com/en-us/office/client-developer/excel/xleventregister
 inline bool register_event(const std::wstring& procedure, XLEVENT event)
 {
-    auto arg1 = std::make_unique<xloper12<tag::xlstr>>(procedure);
-    auto arg2 = std::make_unique<xloper12<tag::xlint>>(event);
+    auto arg1 = std::make_unique<xloper12<xlstr>>(procedure);
+    auto arg2 = std::make_unique<xloper12<xlint>>(event);
     variant12 result;
     XLRET rc = Excel12(xlEventRegister, &result, arg1.get(), arg2.get());
     if (rc != XLRET::xlretSuccess && result.xltype() != xltypeBool)
@@ -106,19 +106,19 @@ inline bool unload()
     XLRET rc = Excel12(xlfUnregister, &result, name.get());
     if (rc != XLRET::xlretSuccess && result.xltype() != xltypeBool)
         return false;
-    return static_cast<bool>(result.get<tag::xlbool>());
+    return static_cast<bool>(result.get<xlbool>());
 }
 
 /// Unregisters a function.
 /// \sa https://docs.microsoft.com/en-us/office/client-developer/excel/xlfunregister-form-1
 inline bool unregister(double id)
 {
-    auto idvar = std::make_unique<xloper12<tag::xlnum>>(id);
+    auto idvar = std::make_unique<xloper12<xlnum>>(id);
     variant12 result;
     XLRET rc = Excel12(xlfUnregister, &result, idvar.get());
     if (rc != XLRET::xlretSuccess && result.xltype() != xltypeBool)
         return false;
-    return static_cast<bool>(result.get<tag::xlbool>());
+    return static_cast<bool>(result.get<xlbool>());
 }
 
 /// Checks for a user interrupt (pressed ESC key).
@@ -129,7 +129,7 @@ inline bool check_interrupt()
     XLRET rc = Excel12(xlAbort, &result);
     if (rc != XLRET::xlretSuccess && result.xltype() != xltypeBool)
         return false;
-    return static_cast<bool>(result.get<tag::xlbool>());
+    return static_cast<bool>(result.get<xlbool>());
 }
 
 } // namespace xll

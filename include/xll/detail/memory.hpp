@@ -10,7 +10,10 @@
 #include <xll/config.hpp>
 
 #include <cstdint>
+#include <memory>
 #include <new>
+#include <type_traits>
+
 #include <intrin.h>
 
 namespace xll {
@@ -43,6 +46,55 @@ BOOST_FORCEINLINE std::uintptr_t stack_limit()
     return __readfsdword(0x08); // offsetof(NT_TIB, StackLimit)
 #endif
 }
+
+// Used for empty base optimization.
+template <class Allocator>
+struct alloc_holder : private Allocator
+{
+    using ebo_eligible = std::conjunction<
+        std::is_empty<Allocator>,
+        std::is_copy_constructible<Allocator>>;
+
+    static_assert(ebo_eligible::value, "allocator must be stateless");
+
+    alloc_holder() = default;
+
+    explicit alloc_holder(const Allocator& alloc)
+        noexcept(std::is_nothrow_copy_constructible_v<Allocator>)
+        : Allocator { alloc } {}
+
+    const Allocator& alloc() const noexcept { return *this; }
+
+    Allocator& alloc() noexcept { return *this; }
+};
+
+// RAII wrapper for exception-safe allocations.
+
+template <class Allocator>
+struct construct_guard
+{
+    using pointer = typename std::allocator_traits<Allocator>::pointer;
+
+    construct_guard(Allocator& a, pointer p) noexcept
+        : a_(a), p_(p), n_(1) {}
+
+    construct_guard(Allocator& a, pointer p, std::size_t n) noexcept
+        : a_(a), p_(p), n_(n) {}
+
+    construct_guard(const construct_guard&) = delete;
+    construct_guard& operator=(const construct_guard&) = delete;
+
+    ~construct_guard() {
+        if (p_) { a_.deallocate(p_, n_); }
+    }
+
+    void release() { p_ = pointer(); }
+
+private:
+    Allocator& a_;
+    pointer p_;
+    std::size_t n_;
+};
 
 } // namespace detail
 } // namespace xll

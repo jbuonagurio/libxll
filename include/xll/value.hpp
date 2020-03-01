@@ -12,14 +12,14 @@
 #include <xll/constants.hpp>
 #include <xll/error.hpp>
 #include <xll/pstring.hpp>
+#include <xll/detail/memory.hpp>
+
+#include <boost/core/alloc_construct.hpp>
+
+#include <iterator>
+#include <stdexcept>
 
 namespace xll {
-namespace detail {
-
-template <class... Ts>
-struct variant;
-
-} // namespace detail
 
 struct xlref12 {
     int32_t rwFirst = 0; // INT32
@@ -37,54 +37,51 @@ struct xlmref12 {
 // XLOPER12 internal value types
 //
 
-template <class Tag>
-struct value;
-
-template <>
-struct value<tag::xlnum> : tag::xlnum
+struct xlnum
 {
-    value() = default;
-    value(double x) : num(x) {}
+    using xltype = std::integral_constant<XLTYPE, xltypeNum>;
+    xlnum() = default;
+    xlnum(double x) : num(x) {}
 
     explicit operator double() const {
         return num;
     }
 
-    friend bool operator==(const value& lhs, const value& rhs) {
+    friend bool operator==(const xlnum& lhs, const xlnum& rhs) {
         return lhs.num == rhs.num;
     }
 
     double num;
 };
 
-template <>
-struct value<tag::xlstr> : public wpstring
+struct xlstr : public wpstring
 {
+    using xltype = std::integral_constant<XLTYPE, xltypeStr>;
     using wpstring::wpstring;
 };
 
-template <>
-struct value<tag::xlbool> : tag::xlbool
+struct xlbool
 {
-    value() = default;
-    value(bool x) : xbool(x) {}
+    using xltype = std::integral_constant<XLTYPE, xltypeBool>;
+    xlbool() = default;
+    xlbool(bool x) : xbool(x) {}
     
     explicit operator bool() const {
         return xbool != 0 ? true : false;
     }
 
-    friend bool operator==(const value& lhs, const value& rhs) {
+    friend bool operator==(const xlbool& lhs, const xlbool& rhs) {
         return lhs.xbool == rhs.xbool;
     }
 
     int32_t xbool; // BOOL (INT32)
 };
 
-template <>
-struct value<tag::xlerr> : tag::xlerr
+struct xlerr
 {
-    value() = default;
-    value(error::excel_error x) : err(x) {}
+    using xltype = std::integral_constant<XLTYPE, xltypeErr>;
+    xlerr() = default;
+    xlerr(error::excel_error x) : err(x) {}
 
     explicit operator std::error_code() const {
         return error::make_error_code(err);
@@ -94,55 +91,57 @@ struct value<tag::xlerr> : tag::xlerr
         return err;
     }
 
-    friend bool operator==(const value& lhs, const value& rhs) {
+    friend bool operator==(const xlerr& lhs, const xlerr& rhs) {
         return lhs.err == rhs.err;
     }
 
     error::excel_error err;
 };
 
-template <>
-struct value<tag::xlint> : tag::xlint
+struct xlint
 {
-    value() = default;
-    value(int32_t i) : w(i) {}
+    using xltype = std::integral_constant<XLTYPE, xltypeInt>;
+    xlint() = default;
+    xlint(int32_t i) : w(i) {}
     
     explicit operator int32_t() const {
         return w;
     }
 
-    friend bool operator==(const value& lhs, const value& rhs) {
+    friend bool operator==(const xlint& lhs, const xlint& rhs) {
         return lhs.w == rhs.w;
     }
 
     int32_t w;
 };
 
-template <>
-struct value<tag::xlsref>: tag::xlsref
+struct xlsref
 {
+    using xltype = std::integral_constant<XLTYPE, xltypeSRef>;
     uint16_t count = 1; // WORD, always = 1
     xlref12 ref;
 };
 
-template <>
-struct value<tag::xlref> : tag::xlref
+struct xlref
 {
+    using xltype = std::integral_constant<XLTYPE, xltypeRef>;
     xlmref12 *lpmref = nullptr;
     uintptr_t idSheet; // DWORD_PTR (ULONG_PTR)
 };
 
-template <>
-struct value<tag::xlmissing> : tag::xlmissing
-{};
-
-template <>
-struct value<tag::xlnil> : tag::xlnil
-{};
-
-template <>
-struct value<tag::xlflow> : tag::xlflow
+struct xlmissing
 {
+    using xltype = std::integral_constant<XLTYPE, xltypeMissing>;
+};
+
+struct xlnil
+{
+    using xltype = std::integral_constant<XLTYPE, xltypeNil>;
+};
+
+struct xlflow
+{
+    using xltype = std::integral_constant<XLTYPE, xltypeFlow>;
     union {
         int level; // xlflowRestart
         int tbctrl; // xlflowPause
@@ -153,32 +152,102 @@ struct value<tag::xlflow> : tag::xlflow
     XLFLOW xlflow; // BYTE
 };
 
-template <>
-struct value<tag::xlbigdata> : tag::xlbigdata
+struct xlbigdata
 {
+    using xltype = std::integral_constant<XLTYPE, xltypeBigData>;
     void *h = nullptr; // BYTE*, HANDLE
     long cbData = 0;
 };
 
-template <>
-struct value<tag::xlmulti> : tag::xlmulti
+namespace detail {
+
+template <class T, class Allocator = std::allocator<T>>
+struct xlmulti_base : detail::alloc_holder<Allocator>
 {
-    detail::variant<
-        value<tag::xlnum>,
-        value<tag::xlstr>,
-        value<tag::xlbool>,
-        value<tag::xlerr>,
-        value<tag::xlint>,
-        value<tag::xlsref>,
-        value<tag::xlref>,
-        value<tag::xlmulti>,
-        value<tag::xlflow>,
-        value<tag::xlbigdata>,
-        value<tag::xlmissing>,
-        value<tag::xlnil>> *lparray = nullptr;
-    
+    using xltype = std::integral_constant<XLTYPE, xltypeMulti>;
+
+    using allocator_type = Allocator;
+    using value_type = T;
+    using element_type = value_type;
+    using index_type = std::ptrdiff_t;
+    using pointer = value_type*;
+    using reference = value_type&;
+    using const_pointer = const value_type*;
+    using const_reference = const value_type&;
+
+    pointer lparray = nullptr;
     int32_t rows = 0; // INT32
     int32_t columns = 0; // INT32
+};
+
+// forward declaration
+template <class... Ts>
+struct variant;
+
+} // namespace detail
+
+struct xlmulti : detail::xlmulti_base<
+    detail::variant<
+        xlnum,
+        xlstr,
+        xlbool,
+        xlerr,
+        xlint,
+        xlsref,
+        xlref,
+        xlmulti,
+        xlflow,
+        xlbigdata,
+        xlmissing,
+        xlnil>>
+{
+    xlmulti(unsigned i, unsigned j)
+    {
+        lparray = alloc().allocate(i * j);
+        detail::construct_guard<allocator_type> guard(alloc(), lparray, i * j);
+        boost::alloc_construct_n(alloc(), lparray, i * j);
+        guard.release();
+    }
+
+    ~xlmulti() noexcept
+    {
+        boost::alloc_destroy_n(alloc(), lparray, size());
+        alloc().deallocate(lparray, size());
+    }
+
+    bool empty() const noexcept {
+        return size() == 0;
+    }
+
+    pointer data() const noexcept {
+        return lparray;
+    }
+
+    std::size_t size() const noexcept {
+        return static_cast<std::size_t>(rows * columns);
+    }
+
+    reference operator[](std::size_t i) noexcept {
+        return *std::next(lparray, i);
+    }
+
+    reference operator()(unsigned i, unsigned j) noexcept {
+        auto n = static_cast<std::size_t>(i * columns + j);
+        return operator[](n);
+    }
+
+    reference at(std::size_t n) {
+        if (n > size())
+            throw std::out_of_range("invalid xlmulti<T> subscript");
+        return operator[](n);
+    }
+
+    reference at(unsigned i, unsigned j) {
+        auto n = static_cast<std::size_t>(i * columns + j);
+        if (n > size())
+            throw std::out_of_range("invalid xlmulti<T> subscript");
+        return operator[](n);
+    }
 };
 
 } // namespace xll

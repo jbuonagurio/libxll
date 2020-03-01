@@ -43,7 +43,7 @@ struct is_array_type<static_fp12<N> *> : std::true_type {};
 // Variable-type worksheet values and arrays (XLOPER12)
 template <class T, class U = void>
 struct type_text_arg {
-    static_assert(std::is_base_of_v<detail::tagged_union, T>, "Invalid operand type");
+    static_assert(!std::is_base_of_v<detail::tagged_union, T>, "invalid operand type");
     static constexpr std::array<wchar_t, 1> value = { L'Q' };
 };
 

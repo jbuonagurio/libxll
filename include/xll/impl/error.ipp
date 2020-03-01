@@ -7,10 +7,6 @@
 
 #pragma once
 
-#include <xll/config.hpp>
-
-#include <xll/error.hpp>
-
 #include <string>
 
 namespace xll {

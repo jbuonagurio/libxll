@@ -198,7 +198,7 @@ public:
         if (xltype_ != rhs.xltype_)
             return false;
         return boost::mp11::mp_with_index<sizeof...(Ts)>(rhs.index(),
-            equals{*this, rhs});       
+            equals{*this, rhs});
     }
 
     // Converting constructors for stored value types.

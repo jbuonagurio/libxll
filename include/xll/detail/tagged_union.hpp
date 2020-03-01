@@ -26,18 +26,18 @@ namespace detail {
 struct tagged_union
 {
     using storage_type = std::aligned_union_t<0,
-        value<tag::xlnum>,
-        value<tag::xlstr>,
-        value<tag::xlbool>,
-        value<tag::xlerr>,
-        value<tag::xlint>,
-        value<tag::xlsref>,
-        value<tag::xlref>,
-        value<tag::xlmulti>,
-        value<tag::xlflow>,
-        value<tag::xlbigdata>,
-        value<tag::xlmissing>,
-        value<tag::xlnil>>;
+        xlnum,
+        xlstr,
+        xlbool,
+        xlerr,
+        xlint,
+        xlsref,
+        xlref,
+        xlmulti,
+        xlflow,
+        xlbigdata,
+        xlmissing,
+        xlnil>;
 
     storage_type val_;
     uint32_t xltype_; // DWORD

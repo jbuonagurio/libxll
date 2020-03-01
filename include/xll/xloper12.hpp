@@ -30,29 +30,27 @@
 namespace xll {
 
 using variant12 = detail::variant<
-    value<tag::xlnum>,
-    value<tag::xlstr>,
-    value<tag::xlbool>,
-    value<tag::xlerr>,
-    value<tag::xlint>,
-    value<tag::xlsref>,
-    value<tag::xlref>,
-    value<tag::xlmulti>,
-    value<tag::xlflow>,
-    value<tag::xlbigdata>,
-    value<tag::xlmissing>,
-    value<tag::xlnil>>;
+    xlnum,
+    xlstr,
+    xlbool,
+    xlerr,
+    xlint,
+    xlsref,
+    xlref,
+    xlmulti,
+    xlflow,
+    xlbigdata,
+    xlmissing,
+    xlnil>;
 
 //
 // XLOPER12 value types
 //
 
-template <class Tag>
-using xloper12 = detail::variant<value<Tag>>;
+template <class T>
+using xloper12 = detail::variant<T>;
 
-//using string12 = detail::variant<value<tag::xlstr>>;
-
-using handle12 = detail::variant<value<tag::xlbigdata>>;
+using handle12 = detail::variant<xlbigdata>;
 
 template <std::size_t N>
 using literal12 = detail::variant<basic_pstring_literal<wchar_t, N>>;

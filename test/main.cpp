@@ -16,25 +16,25 @@ using namespace xll;
 std::string xltype_name(XLTYPE xltype)
 {
     switch (xltype) {
-        case xltypeNum: return "xltypeNum";
-        case xltypeStr: return "xltypeStr";
-        case xltypeBool: return "xltypeBool";
-        case xltypeRef: return "xltypeRef";
-        case xltypeErr: return "xltypeErr";
-        case xltypeFlow: return "xltypeFlow";
-        case xltypeMulti: return "xltypeMulti";
-        case xltypeMissing: return "xltypeMissing";
-        case xltypeNil: return "xltypeNil";
-        case xltypeSRef: return "xltypeSRef";
-        case xltypeInt: return "xltypeInt";
-        case xltypeBigData: return "xltypeBigData";
-        default: return "xltypeUnknown";
+    case xltypeNum: return "xltypeNum";
+    case xltypeStr: return "xltypeStr";
+    case xltypeBool: return "xltypeBool";
+    case xltypeRef: return "xltypeRef";
+    case xltypeErr: return "xltypeErr";
+    case xltypeFlow: return "xltypeFlow";
+    case xltypeMulti: return "xltypeMulti";
+    case xltypeMissing: return "xltypeMissing";
+    case xltypeNil: return "xltypeNil";
+    case xltypeSRef: return "xltypeSRef";
+    case xltypeInt: return "xltypeInt";
+    case xltypeBigData: return "xltypeBigData";
+    default: return "xltypeUnknown";
     }
 }
 
 constexpr int test_constexpr()
 {
-    return variant12(value<tag::xlint>(555)).get<tag::xlint>().w;
+    return variant12(xlint(555)).get<xlint>().w;
 }
 
 const char * __stdcall test_function(xll::variant12 *)
@@ -49,6 +49,19 @@ void test_register()
     xll::register_function(test_function, L"test_function", L"TEST.FUNCTION", opts, attrs);
 }
 
+void test_multi()
+{
+    auto val = xlmulti(5, 5);
+    val[0] = xlint(5);
+    val[1] = xlnum(5);
+    std::cout << "XLTYPE " << val[0].xltype() << "\n";
+    std::cout << "XLTYPE " << val[1].xltype() << "\n";
+    std::cout << "XLTYPE " << val[2].xltype() << "\n";
+    std::cout << "XLTYPE " << val[3].xltype() << "\n";
+    std::cout << "XLTYPE " << val[4].xltype() << "\n";
+    //auto multi = xloper12<xlmulti>;
+}
+
 void test_pstring()
 {
     using namespace std::string_literals;
@@ -56,8 +69,8 @@ void test_pstring()
     auto fmtlit = make_pstring_literal("ABC");
     std::cout << fmtlit << "\n";
 
-    auto comp1 = xloper12<tag::xlint>(888);
-    auto comp2 = xloper12<tag::xlint>(889);
+    auto comp1 = xloper12<xlint>(888);
+    auto comp2 = xloper12<xlint>(889);
     std::cout << (comp1 == comp2) << "\n";
 
     std::cout << static_cast<std::string>(fmtlit) << "\n";
@@ -88,8 +101,8 @@ void test_pstring()
 
     fmt::print("{}\n", (std::string)ps1);
 
-    std::cout << "*** value<tag::xlstr> test\n";
-    auto strtest = value<tag::xlstr>(L"Test String"s);
+    std::cout << "*** value<xlstr> test\n";
+    auto strtest = xlstr(L"Test String"s);
     std::wcout << strtest << "\n";
 
     std::cout << "*** pstring test 1\n";
@@ -133,23 +146,23 @@ void test_heap_detect()
     bool on_heap = false;
 
     {
-        auto vv = value<tag::xlint>(555);
+        auto vv = xlint(555);
         variant12 *var1 = new variant12(vv);
         on_heap = var1->flags() & xlbitDLLFree;
         fmt::print("heap check 1: {}\n", on_heap);
     }
     {
-        auto oper1 = xloper12<tag::xlint>(888);
+        auto oper1 = xloper12<xlint>(888);
         on_heap = oper1.flags() & xlbitDLLFree;
         fmt::print("heap check 2: {}\n", on_heap);
     }
     {
-        auto oper2 = xloper12<tag::xlint>(value<tag::xlint>(444));
+        auto oper2 = xloper12<xlint>(xlint(444));
         on_heap = oper2.flags() & xlbitDLLFree;
         fmt::print("heap check 3: {}\n", on_heap);
     }
     {
-        auto oper3 = new xloper12<tag::xlstr>(std::wstring(L"XXX"));
+        auto oper3 = new xloper12<xlstr>(std::wstring(L"XXX"));
         on_heap = oper3->flags() & xlbitDLLFree;
         fmt::print("heap check 4: {}\n", on_heap);
     }
@@ -172,7 +185,9 @@ int main()
 {   
     namespace ublas = boost::numeric::ublas;
     namespace bc = boost::container;
-    
+
+    test_register();
+    test_multi();
     test_pstring();
     test_heap_detect();
 }

@@ -37,18 +37,18 @@ struct formatter<xll::XLRET>
     auto format(xll::XLRET rc, FormatContext &ctx)
     {
         switch (rc) {
-            case xll::XLRET::xlretSuccess:                 return format_to(ctx.out(), "xlretSuccess");
-            case xll::XLRET::xlretAbort:                   return format_to(ctx.out(), "xlretAbort");
-            case xll::XLRET::xlretInvXlfn:                 return format_to(ctx.out(), "xlretInvXlfn");
-            case xll::XLRET::xlretInvCount:                return format_to(ctx.out(), "xlretInvCount");
-            case xll::XLRET::xlretInvXloper:               return format_to(ctx.out(), "xlretInvXloper");
-            case xll::XLRET::xlretStackOvfl:               return format_to(ctx.out(), "xlretStackOvfl");
-            case xll::XLRET::xlretFailed:                  return format_to(ctx.out(), "xlretFailed");
-            case xll::XLRET::xlretUncalced:                return format_to(ctx.out(), "xlretUncalced");
-            case xll::XLRET::xlretNotThreadSafe:           return format_to(ctx.out(), "xlretNotThreadSafe");
-            case xll::XLRET::xlretInvAsynchronousContext:  return format_to(ctx.out(), "xlretInvAsynchronousContext");
-            case xll::XLRET::xlretNotClusterSafe:          return format_to(ctx.out(), "xlretNotClusterSafe");
-            default:                                       return format_to(ctx.out(), "xlretUnknown");
+        case xll::XLRET::xlretSuccess:                 return format_to(ctx.out(), "xlretSuccess");
+        case xll::XLRET::xlretAbort:                   return format_to(ctx.out(), "xlretAbort");
+        case xll::XLRET::xlretInvXlfn:                 return format_to(ctx.out(), "xlretInvXlfn");
+        case xll::XLRET::xlretInvCount:                return format_to(ctx.out(), "xlretInvCount");
+        case xll::XLRET::xlretInvXloper:               return format_to(ctx.out(), "xlretInvXloper");
+        case xll::XLRET::xlretStackOvfl:               return format_to(ctx.out(), "xlretStackOvfl");
+        case xll::XLRET::xlretFailed:                  return format_to(ctx.out(), "xlretFailed");
+        case xll::XLRET::xlretUncalced:                return format_to(ctx.out(), "xlretUncalced");
+        case xll::XLRET::xlretNotThreadSafe:           return format_to(ctx.out(), "xlretNotThreadSafe");
+        case xll::XLRET::xlretInvAsynchronousContext:  return format_to(ctx.out(), "xlretInvAsynchronousContext");
+        case xll::XLRET::xlretNotClusterSafe:          return format_to(ctx.out(), "xlretNotClusterSafe");
+        default:                                       return format_to(ctx.out(), "xlretUnknown");
         }
     }
 };
