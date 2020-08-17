@@ -10,7 +10,7 @@
 #include <xll/config.hpp>
 
 #include <boost/mp11/utility.hpp>
-#include <boost/winapi/character_code_conversion.hpp>
+#include <boost/nowide/convert.hpp> // Boost 1.73.0
 
 #include <algorithm>
 #include <array>
@@ -168,16 +168,16 @@ constexpr wpstring_array<N> make_wpstring_array(const std::array<wchar_t, N>& ar
 } // namespace xll
 
 /// Allocates new pascal string at runtime, performing UTF-8/UTF-16 conversion
-/// as necessary using Win32 API (MultiByteToWideChar, WideCharToMultiByte).
-/// For compile-time fixed strings that don't require character set conversion,
-/// use xll::basic_pstring_literal.
+/// as necessary using Boost.Nowide. For compile-time fixed strings that don't
+/// require character set conversion, use xll::basic_pstring_literal.
 ///
-/// Boost.Nowide, Boost.Text, ICU could be used as alternatives. 
-/// std::wstring_convert and std::codecvt_utf8_utf16 are depreciated in C++17.
+/// Win32 API (MultiByteToWideChar, WideCharToMultiByte), Boost.Text or ICU
+/// could be used as alternatives. std::wstring_convert and
+/// std::codecvt_utf8_utf16 are depreciated in C++17.
 
 namespace xll {
 
-template <class CharT>
+template <class CharT> // class Allocator
 struct basic_pstring
 {
     static_assert(sizeof(CharT) <= sizeof(wchar_t), "unsupported character type");
@@ -191,8 +191,8 @@ protected:
 
     void copy_construct(const CharT *s, size_type n)
     {
-        std::size_t cb = (n + 1) * sizeof(CharT);
-        data_ = static_cast<CharT *>(::operator new (cb));
+        std::size_t nbytes = (n + 1) * sizeof(CharT);
+        data_ = static_cast<CharT *>(::operator new (nbytes)); // allocate
         data_[0] = n;
         if (s != nullptr && n > 0)
             std::copy_n(s, n, &data_[1]);
@@ -272,36 +272,22 @@ public:
     template <typename FromCharT = T, std::enable_if_t<(sizeof(FromCharT) < sizeof(CharT))>* = nullptr>
     explicit basic_pstring(const std::basic_string<FromCharT>& s)
     {
-        using namespace boost::winapi;
-
-        const size_type len = static_cast<size_type>(
-            std::char_traits<FromCharT>::length(s.c_str()));
-        const size_type n = static_cast<size_type>(
-            MultiByteToWideChar(CP_UTF8_, 0, s.data(), (int)len, nullptr, 0)); // truncate
-
-        std::size_t cb = (n + 1) * sizeof(CharT);
-        data_ = static_cast<CharT *>(::operator new (cb));
-        data_[0] = n;
-        if (n > 0)
-            MultiByteToWideChar(CP_UTF8_, 0, s.data(), (int)len, &data_[1], (int)n);
+        const FromCharT *cs = s.c_str();
+        const size_type nchars = static_cast<size_type>(
+            std::char_traits<FromCharT>::length(cs)); // truncate
+        std::basic_string<CharT> wide = boost::nowide::widen(cs, nchars);
+        copy_construct(wide);
     }
 
     // UTF-16 to UTF-8
     template <typename FromCharT = T, std::enable_if_t<(sizeof(FromCharT) > sizeof(CharT))>* = nullptr>
     explicit basic_pstring(const std::basic_string<FromCharT>& s)
     {
-        using namespace boost::winapi;
-
-        const size_type len = static_cast<size_type>(
-            std::char_traits<FromCharT>::length(s.c_str()));
-        const size_type n = static_cast<size_type>(
-            WideCharToMultiByte(CP_UTF8_, 0, s.data(), (int)len, nullptr, 0, nullptr, nullptr)); // truncate
-        
-        std::size_t cb = (n + 1) * sizeof(CharT);
-        data_ = static_cast<CharT *>(::operator new (cb));
-        data_[0] = n;
-        if (n > 0)
-            WideCharToMultiByte(CP_UTF8_, 0, s.data(), (int)len, &data_[1], (int)n, nullptr, nullptr);
+        const FromCharT *cs = s.c_str();
+        const size_type nchars = static_cast<size_type>(
+            std::char_traits<FromCharT>::length(cs)); // truncate
+        std::basic_string<CharT> narrow = boost::nowide::narrow(cs, nchars);
+        copy_construct(narrow);
     }
 
     explicit operator std::basic_string<CharT>() const
@@ -312,44 +298,26 @@ public:
         return std::basic_string<CharT>(&data_[1], &data_[1 + n]);
     }
 
+    explicit operator std::basic_string_view<CharT>() const
+    {
+        const std::size_t n = size();
+        if (n == 0)
+            return std::basic_string_view<CharT>();
+        return { &data_[1], n };
+    }
+
     // UTF-16 to UTF-8
     template <typename ToCharT = T, std::enable_if_t<(sizeof(ToCharT) < sizeof(CharT))>* = nullptr>
     explicit operator std::basic_string<ToCharT>() const
     {
-        using namespace boost::winapi;
-
-        const std::size_t n0 = size();
-        if (n0 == 0)
-            return std::basic_string<ToCharT>();
-        
-        const size_type n1 = static_cast<size_type>(
-            WideCharToMultiByte(CP_UTF8_, 0, &data_[1], (int)n0, nullptr, 0, nullptr, nullptr));
-        
-        std::basic_string<ToCharT> out(n1, '\0');
-        if (n1 > 0)
-            WideCharToMultiByte(CP_UTF8_, 0, &data_[1], (int)n0, out.data(), (int)n1, nullptr, nullptr);
-
-        return out;
+        return boost::nowide::narrow(data(), size());
     }
 
     // UTF-8 to UTF-16
     template <typename ToCharT = T, std::enable_if_t<(sizeof(ToCharT) > sizeof(CharT))>* = nullptr>
     explicit operator std::basic_string<ToCharT>() const
     {
-        using namespace boost::winapi;
-        
-        const std::size_t n0 = size();
-        if (n0 == 0)
-            return std::basic_string<ToCharT>();
-
-        const size_type n1 = static_cast<size_type>(
-            MultiByteToWideChar(CP_UTF8_, 0, &data_[1], (int)n0, nullptr, 0));
-
-        std::basic_string<ToCharT> out(n1, L'\0');
-        if (n1 > 0)
-            MultiByteToWideChar(CP_UTF8_, 0, &data_[1], (int)n0, out.data(), (int)n1);
-
-        return out;
+        return boost::nowide::widen(data(), size());
     }
 
     std::size_t size() const 
@@ -373,14 +341,6 @@ public:
         if (empty())
             return nullptr;
         return &data_[1];
-    }
-
-    explicit operator std::basic_string_view<CharT>() const
-    {
-        const std::size_t n = size();
-        if (n == 0)
-            return std::basic_string_view<CharT>();
-        return { &data_[1], n };
     }
 
     friend bool operator==(const basic_pstring& lhs, const basic_pstring& rhs)
