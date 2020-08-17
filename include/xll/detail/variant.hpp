@@ -46,14 +46,14 @@ struct variant : public tagged_union
         using value = boost::mp11::mp_at<types, index>;
     };
 
-    using is_monostate =
+    using is_single_type =
       std::is_same<
         boost::mp11::mp_size<types>,
         boost::mp11::mp_size_t<1>>;
 
     using default_xltype =
       std::conditional_t<
-        is_monostate::value,
+        is_single_type::value,
         typename boost::mp11::mp_front<types>::xltype,
         std::integral_constant<uint32_t, xltypeMissing>>;
 
@@ -218,9 +218,9 @@ public:
         set_xltype(T::xltype::value);
     }
     
-    // Monostate converting constructors for arguments.
+    // Single type converting constructors for arguments.
     template <class... Args,
-        std::enable_if_t<is_monostate::value && !boost::mp11::mp_or<boost::mp11::mp_contains<types, Args>...>::value>* = nullptr>
+        std::enable_if_t<is_single_type::value && !boost::mp11::mp_or<boost::mp11::mp_contains<types, Args>...>::value>* = nullptr>
     constexpr variant(const Args&... args)
     {
         using T = boost::mp11::mp_front<types>;
@@ -229,7 +229,7 @@ public:
     }
 
     template <class... Args,
-        std::enable_if_t<is_monostate::value && !boost::mp11::mp_or<boost::mp11::mp_contains<types, Args>...>::value>* = nullptr>
+        std::enable_if_t<is_single_type::value && !boost::mp11::mp_or<boost::mp11::mp_contains<types, Args>...>::value>* = nullptr>
     constexpr variant(Args&&... args)
     {
         using T = boost::mp11::mp_front<types>;
@@ -280,15 +280,15 @@ public:
         return *launder_cast<const T*>(&val_);
     }
 
-    // Monostate value accessor.
+    // Single type value accessor.
     template <class V = boost::mp11::mp_front<types>>
-    constexpr std::enable_if_t<is_monostate::value, V>& value() noexcept
+    constexpr std::enable_if_t<is_single_type::value, V>& value() noexcept
     {
         return *launder_cast<V*>(&val_);
     }
 
     template <class V = boost::mp11::mp_front<types>>
-    constexpr const std::enable_if_t<is_monostate::value, V>& value() const noexcept
+    constexpr const std::enable_if_t<is_single_type::value, V>& value() const noexcept
     {
         return *launder_cast<const V*>(&val_);
     }
