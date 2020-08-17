@@ -7,15 +7,15 @@
 
 #pragma once
 
-#include <cstdlib>
-
 #include <xll/config.hpp>
+
 #include <xll/constants.hpp>
+#include <xll/detail/callback.hpp>
 #include <xll/log.hpp>
 
-#include <boost/config.hpp>
+#include <cstdlib> // std::abort
+
 #include <boost/current_function.hpp>
-#include <boost/winapi/dll.hpp>
 
 #if defined(XLL_DISABLE_ASSERTS) || defined(NDEBUG)
 
@@ -32,9 +32,7 @@ inline void assertion_failed(const char *expr, const char *function, const char 
     // Regular assert would call std::abort and terminate Excel. Instead, call
     // xlfUnregister (Form 2) to force unload and deactivation of the DLL.
 
-    using EXCEL12PROC = int (__stdcall *)(int xlfn, int coper, void **rgpvalue12, void *value12Res);
-    auto hmodule = boost::winapi::get_module_handle("");
-    auto pfn = (EXCEL12PROC)boost::winapi::get_proc_address(hmodule, "MdCallBack12");
+    auto pfn = detail::MdCallBack12<void, void>();
 	if (pfn == nullptr)
         std::abort();
     
@@ -48,4 +46,4 @@ inline void assertion_failed(const char *expr, const char *function, const char 
 
 #define XLL_ASSERT(expr) (BOOST_LIKELY(!!(expr)) ?((void)0): xll::assertion_failed(#expr, BOOST_CURRENT_FUNCTION, __FILE__, __LINE__))
 
-#endif
+#endif // defined(XLL_DISABLE_ASSERTS) || defined(NDEBUG)

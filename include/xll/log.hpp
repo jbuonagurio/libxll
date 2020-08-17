@@ -15,9 +15,16 @@
 #include <xll/config.hpp>
 #include <xll/constants.hpp>
 
+#if BOOST_OS_WINDOWS
 #include <boost/winapi/debugapi.hpp>
 #include <boost/winapi/get_current_process_id.hpp>
 #include <boost/winapi/get_current_thread_id.hpp>
+#else
+#include <sys/types.h>
+#include <unistd.h>
+#include <pthread.h>
+#include <iostream>
+#endif
 
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/base_sink.h>
@@ -69,7 +76,11 @@ protected:
     {
         spdlog::memory_buf_t formatted;
         base_sink<Mutex>::formatter_->format(msg, formatted);
+#if BOOST_OS_WINDOWS
         boost::winapi::OutputDebugStringA(fmt::to_string(formatted).c_str());
+#else
+        std::clog << fmt::to_string(formatted);
+#endif
     }
 
     void flush_() override {}
@@ -82,7 +93,7 @@ using msvc_sink_mt = msvc_sink<std::mutex>;
 
 inline int process_id()
 {
-#ifdef _WIN32
+#if BOOST_OS_WINDOWS
     return static_cast<int>(boost::winapi::GetCurrentProcessId());
 #else
     return static_cast<int>(::getpid());
@@ -91,7 +102,7 @@ inline int process_id()
 
 inline std::size_t thread_id()
 {
-#ifdef _WIN32
+#if BOOST_OS_WINDOWS
     return static_cast<std::size_t>(boost::winapi::GetCurrentThreadId());
 #else
     uint64_t tid;

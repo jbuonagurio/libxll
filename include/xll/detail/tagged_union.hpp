@@ -51,6 +51,7 @@ protected:
         set_xltype(xltype);
     }
 
+#if BOOST_OS_WINDOWS
     void set_xltype(uint32_t xltype) {
         if (reinterpret_cast<std::uintptr_t>(this) > stack_base() ||
             reinterpret_cast<std::uintptr_t>(this) < stack_limit()) {
@@ -60,6 +61,11 @@ protected:
             xltype_ = xltype;
         }
     }
+#else
+    void set_xltype(uint32_t xltype) {
+        xltype_ = xltype | xlbitDLLFree; // destroy in xlAutoFree12
+    }
+#endif // BOOST_OS_WINDOWS
 
 public:
     constexpr void set_flags(uint32_t flags) {

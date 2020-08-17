@@ -11,7 +11,10 @@
 // - Boost.Assert
 // - Boost.Config
 // - Boost.MP11
+// - Boost.NoWide
+// - Boost.Predef
 // - Boost.WinAPI
 // - Boost.uBLAS
 
 #include <boost/config.hpp>
+#include <boost/predef.h>

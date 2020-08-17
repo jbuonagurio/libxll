@@ -14,7 +14,9 @@
 #include <new>
 #include <type_traits>
 
-#include <intrin.h>
+#if BOOST_OS_WINDOWS
+#include <intrin.h> // __readgsqword, __readfsdword
+#endif
 
 namespace xll {
 namespace detail {
@@ -29,6 +31,7 @@ T launder_cast(U* u)
 #endif
 }
 
+#if BOOST_OS_WINDOWS
 BOOST_FORCEINLINE std::uintptr_t stack_base()
 {
 #ifdef _WIN64
@@ -46,6 +49,7 @@ BOOST_FORCEINLINE std::uintptr_t stack_limit()
     return __readfsdword(0x08); // offsetof(NT_TIB, StackLimit)
 #endif
 }
+#endif // BOOST_OS_WINDOWS
 
 // Used for empty base optimization.
 template <class Allocator>
@@ -66,34 +70,6 @@ struct alloc_holder : private Allocator
     const Allocator& alloc() const noexcept { return *this; }
 
     Allocator& alloc() noexcept { return *this; }
-};
-
-// RAII wrapper for exception-safe allocations.
-
-template <class Allocator>
-struct construct_guard
-{
-    using pointer = typename std::allocator_traits<Allocator>::pointer;
-
-    construct_guard(Allocator& a, pointer p) noexcept
-        : a_(a), p_(p), n_(1) {}
-
-    construct_guard(Allocator& a, pointer p, std::size_t n) noexcept
-        : a_(a), p_(p), n_(n) {}
-
-    construct_guard(const construct_guard&) = delete;
-    construct_guard& operator=(const construct_guard&) = delete;
-
-    ~construct_guard() {
-        if (p_) { a_.deallocate(p_, n_); }
-    }
-
-    void release() { p_ = pointer(); }
-
-private:
-    Allocator& a_;
-    pointer p_;
-    std::size_t n_;
 };
 
 } // namespace detail
