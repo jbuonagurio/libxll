@@ -20,12 +20,12 @@
 #include <algorithm>
 #include <array>
 #include <functional>
+#include <map>
 #include <mutex>
 #include <string>
 #include <type_traits>
 #include <typeindex>
 #include <typeinfo>
-#include <unordered_map>
 
 namespace xll {
 
@@ -40,19 +40,28 @@ struct function_options
     std::vector<std::wstring> argument_help;
 };
 
+struct registry_map
+{
+    static std::map<std::type_index, double>& instance() {
+        static std::map<std::type_index, double> instance;
+        return instance;
+    }
+
+private:
+    registry_map() = default;
+    ~registry_map() = default;
+    registry_map(const registry_map&) = delete;
+    registry_map& operator=(const registry_map&) = delete;
+};
+
 struct registry
 {
-private:
-    static inline std::mutex mutex_;
-    static inline std::unordered_map<std::type_index, double> data_;
-
-public:
     template <class F>
     static bool add(F ptr, double id)
     {
         std::lock_guard<std::mutex> lock(mutex_);
         auto index = std::type_index(typeid(ptr));
-        data_[index] = id;
+        registry_map::instance()[index] = id;
         return true;
     }
 
@@ -61,8 +70,11 @@ public:
     {
         std::lock_guard<std::mutex> lock(mutex_);
         auto index = std::type_index(typeid(ptr));
-        return data_.erase(index);
+        return registry_map::instance().erase(index);
     }
+
+private:
+    static inline std::mutex mutex_; // C++17
 };
 
 // Index    Name                   Type        Alt. Type
