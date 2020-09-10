@@ -18,6 +18,7 @@ namespace tag {
 struct volatile_ {};
 struct cluster_safe {};
 struct thread_safe {};
+struct macro_sheet_equivalent {};
 
 } // namespace tag
 
@@ -25,6 +26,7 @@ template <class T> struct attribute;
 template <> struct attribute<tag::volatile_> {};
 template <> struct attribute<tag::cluster_safe> {};
 template <> struct attribute<tag::thread_safe> {};
+template <> struct attribute<tag::macro_sheet_equivalent> {};
 
 template <class... Tags>
 struct attribute_set

@@ -57,7 +57,7 @@ public:
         return N;
     }
 
-    constexpr explicit operator std::basic_string_view<CharT>() const {
+    constexpr operator std::basic_string_view<CharT>() const {
         if constexpr (N == 0)
             return std::basic_string_view<CharT>();
         return { &data_[1], N };
@@ -75,7 +75,8 @@ public:
     }
 
     friend std::basic_ostream<CharT>& operator<<(std::basic_ostream<CharT>& os, const basic_pstring_literal_impl& s) {
-        return os << std::basic_string_view<CharT>{ s.data(), s.size() };
+        os << std::basic_string_view<CharT>{ s.data(), s.size() };
+        return os;
     }
 };
 
@@ -144,13 +145,13 @@ constexpr wpstring_literal<N> make_wpstring_literal(const wchar_t(&str)[N])
 template <std::size_t N>
 constexpr pstring_array<N> make_pstring_array(std::array<char, N>&& arr)
 {
-    return wpstring_array<N>(arr);
+    return pstring_array<N>(arr);
 }
 
 template <std::size_t N>
 constexpr pstring_array<N> make_pstring_array(const std::array<char, N>& arr)
 {
-    return wpstring_array<N>(arr);
+    return pstring_array<N>(arr);
 }
 
 template <std::size_t N>
@@ -189,7 +190,7 @@ struct basic_pstring
 protected:
     CharT *data_ = nullptr;
 
-    void copy_construct(const CharT *s, size_type n)
+    inline void internal_copy(const CharT *s, size_type n)
     {
         std::size_t nbytes = (n + 1) * sizeof(CharT);
         data_ = static_cast<CharT *>(::operator new (nbytes)); // allocate
@@ -198,27 +199,29 @@ protected:
             std::copy_n(s, n, &data_[1]);
     }
 
-    void copy_construct(const basic_pstring& rhs)
+    inline void internal_copy(const basic_pstring& rhs)
     {
         if (rhs.data_ != nullptr) {
             const size_type n = rhs.data_[0];
-            copy_construct(&rhs.data_[1], n);
+            internal_copy(&rhs.data_[1], n);
         }
     }
     
-    void copy_construct(const std::basic_string<CharT>& s)
+    inline void internal_copy(const std::basic_string<CharT>& s)
     {
         const size_type n = static_cast<size_type>(
             std::char_traits<CharT>::length(s.c_str())); // truncate
-        copy_construct(s.data(), n);
+        internal_copy(s.data(), n);
     }
 
-    void move_construct(basic_pstring& rhs)
+    inline void internal_copy(const CharT* s)
     {
-        data_ = std::exchange(rhs.data_, nullptr);
+        const size_type n = static_cast<size_type>(
+            std::char_traits<CharT>::length(s)); // truncate
+        internal_copy(s, n);
     }
 
-    void destroy()
+    inline void destroy()
     {
         if (data_ != nullptr) {
             delete data_;
@@ -230,75 +233,91 @@ public:
     basic_pstring() = default;
 
     ~basic_pstring()
-    {
-        destroy();
-    }
+        { destroy(); }
 
-    basic_pstring(const basic_pstring &rhs)
-    {
-        copy_construct(rhs);
-    }
+    basic_pstring(const basic_pstring &s)
+        { internal_copy(s); }
     
-    basic_pstring(basic_pstring&& rhs)
+    basic_pstring(basic_pstring&& s) noexcept
+        : data_(s.data_)
     {
-        move_construct(rhs);
+        if (this != &s) {
+            data_ = std::exchange(s.data_, nullptr);
+        }
     }
 
     basic_pstring& operator=(const basic_pstring& rhs)
     {
         destroy();
-        copy_construct(rhs);
+        internal_copy(rhs);
+        return *this;
     }
 
     basic_pstring& operator=(basic_pstring&& rhs)
     {
-        destroy();
-        move_construct(rhs);
+        if (this != &rhs) {
+            destroy();
+            data_ = std::exchange(rhs.data_, nullptr);
+        }
         return *this;
     }
 
     template <std::size_t N>
-    basic_pstring(const detail::basic_pstring_literal_impl<CharT, N>& s)
-    {
-        copy_construct(s.data(), static_cast<size_type>(N));
-    }
+    explicit basic_pstring(const detail::basic_pstring_literal_impl<CharT, N>& s)
+        { internal_copy(s.data(), static_cast<size_type>(N)); }
 
-    explicit basic_pstring(const std::basic_string<CharT>& s)
-    {
-        copy_construct(s);
-    }
+    // No Conversion
+    basic_pstring(const CharT* s)
+        { internal_copy(s); }
+
+    // No Conversion
+    basic_pstring(const std::basic_string<CharT>& s)
+        { internal_copy(s); }
     
     // UTF-8 to UTF-16
     template <typename FromCharT = T, std::enable_if_t<(sizeof(FromCharT) < sizeof(CharT))>* = nullptr>
-    explicit basic_pstring(const std::basic_string<FromCharT>& s)
+    basic_pstring(const FromCharT *s)
+    {
+        const size_type nchars = static_cast<size_type>(
+            std::char_traits<FromCharT>::length(s)); // truncate
+        std::basic_string<CharT> wide = boost::nowide::widen(s, nchars);
+        internal_copy(wide);
+    }
+
+    // UTF-8 to UTF-16
+    template <typename FromCharT = T, std::enable_if_t<(sizeof(FromCharT) < sizeof(CharT))>* = nullptr>
+    basic_pstring(const std::basic_string<FromCharT>& s)
     {
         const FromCharT *cs = s.c_str();
         const size_type nchars = static_cast<size_type>(
             std::char_traits<FromCharT>::length(cs)); // truncate
         std::basic_string<CharT> wide = boost::nowide::widen(cs, nchars);
-        copy_construct(wide);
+        internal_copy(wide);
     }
 
     // UTF-16 to UTF-8
     template <typename FromCharT = T, std::enable_if_t<(sizeof(FromCharT) > sizeof(CharT))>* = nullptr>
-    explicit basic_pstring(const std::basic_string<FromCharT>& s)
+    basic_pstring(const FromCharT *s)
+    {
+        const size_type nchars = static_cast<size_type>(
+            std::char_traits<FromCharT>::length(s)); // truncate
+        std::basic_string<CharT> narrow = boost::nowide::narrow(cs, nchars);
+        internal_copy(narrow);
+    }
+
+    // UTF-16 to UTF-8
+    template <typename FromCharT = T, std::enable_if_t<(sizeof(FromCharT) > sizeof(CharT))>* = nullptr>
+    basic_pstring(const std::basic_string<FromCharT>& s)
     {
         const FromCharT *cs = s.c_str();
         const size_type nchars = static_cast<size_type>(
             std::char_traits<FromCharT>::length(cs)); // truncate
         std::basic_string<CharT> narrow = boost::nowide::narrow(cs, nchars);
-        copy_construct(narrow);
+        internal_copy(narrow);
     }
 
-    explicit operator std::basic_string<CharT>() const
-    {
-        const std::size_t n = size();
-        if (n == 0)
-            return std::basic_string<CharT>();
-        return std::basic_string<CharT>(&data_[1], &data_[1 + n]);
-    }
-
-    explicit operator std::basic_string_view<CharT>() const
+    // No Conversion
+    operator std::basic_string_view<CharT>() const
     {
         const std::size_t n = size();
         if (n == 0)
@@ -306,19 +325,24 @@ public:
         return { &data_[1], n };
     }
 
+    // No Conversion
+    operator std::basic_string<CharT>() const
+    {
+        const std::size_t n = size();
+        if (n == 0)
+            return std::basic_string<CharT>();
+        return std::basic_string<CharT>(&data_[1], &data_[1 + n]);
+    }
+
     // UTF-16 to UTF-8
     template <typename ToCharT = T, std::enable_if_t<(sizeof(ToCharT) < sizeof(CharT))>* = nullptr>
-    explicit operator std::basic_string<ToCharT>() const
-    {
-        return boost::nowide::narrow(data(), size());
-    }
+    operator std::basic_string<ToCharT>() const
+        { return boost::nowide::narrow(data(), size()); }
 
     // UTF-8 to UTF-16
     template <typename ToCharT = T, std::enable_if_t<(sizeof(ToCharT) > sizeof(CharT))>* = nullptr>
-    explicit operator std::basic_string<ToCharT>() const
-    {
-        return boost::nowide::widen(data(), size());
-    }
+    operator std::basic_string<ToCharT>() const
+        { return boost::nowide::widen(data(), size()); }
 
     std::size_t size() const 
     {
@@ -328,14 +352,10 @@ public:
     }
 
     std::size_t length() const 
-    {
-        return size();
-    }
+        { return size(); }
 
     bool empty() const
-    {
-        return size() == 0;
-    }
+        { return size() == 0; }
 
     CharT * data() const {
         if (empty())
@@ -359,6 +379,10 @@ public:
             return os;
         return os << std::basic_string_view<CharT>{ &s.data_[1], n };
     }
+
+    template <typename ToCharT = T, std::enable_if_t<(sizeof(ToCharT) != sizeof(CharT))>* = nullptr>
+    friend std::basic_ostream<ToCharT>& operator<<(std::basic_ostream<ToCharT>& os, const basic_pstring& s)
+        { return os << std::basic_string<ToCharT>(s); }
 };
 
 using pstring = basic_pstring<char>;

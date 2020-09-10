@@ -71,7 +71,7 @@ enum XLFLOW : unsigned char {
 // These values can be returned from Excel4(), Excel4v(), Excel12() or Excel12v().
 //
 
-enum class XLRET : int {
+enum XLRET : int {
     xlretSuccess = 0,                  // success
     xlretAbort  = 1,                   // macro halted
     xlretInvXlfn = 2,                  // invalid function number

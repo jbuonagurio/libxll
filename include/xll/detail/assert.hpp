@@ -25,14 +25,14 @@
 
 namespace xll {
 
-inline void assertion_failed(const char *expr, const char *function, const char *file, int line)
+inline void assertion_failed(const char *expr, [[maybe_unused]] const char *function, const char *file, int line)
 {
     xll::log()->critical("Assertion failed: {}, file {}, line {}", expr, file, line);
 
     // Regular assert would call std::abort and terminate Excel. Instead, call
     // xlfUnregister (Form 2) to force unload and deactivation of the DLL.
 
-    auto pfn = detail::MdCallBack12<void, void>();
+    auto pfn = detail::MdCallBack12();
 	if (pfn == nullptr)
         std::abort();
     

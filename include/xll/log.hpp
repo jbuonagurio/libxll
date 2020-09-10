@@ -66,10 +66,10 @@ namespace xll {
 namespace sinks {
 
 template <typename Mutex>
-class msvc_sink : public spdlog::sinks::base_sink<Mutex>
+class debug_sink : public spdlog::sinks::base_sink<Mutex>
 {
 public:
-    explicit msvc_sink() {}
+    explicit debug_sink() {}
 
 protected:
     void sink_it_(const spdlog::details::log_msg& msg) override
@@ -77,6 +77,7 @@ protected:
         spdlog::memory_buf_t formatted;
         base_sink<Mutex>::formatter_->format(msg, formatted);
 #if BOOST_OS_WINDOWS
+        //std::clog << fmt::to_string(formatted);
         boost::winapi::OutputDebugStringA(fmt::to_string(formatted).c_str());
 #else
         std::clog << fmt::to_string(formatted);
@@ -86,7 +87,7 @@ protected:
     void flush_() override {}
 };
 
-using msvc_sink_mt = msvc_sink<std::mutex>;
+using debug_sink_mt = debug_sink<std::mutex>;
 
 } // namespace sinks
 
@@ -113,7 +114,7 @@ inline std::size_t thread_id()
 
 inline auto log()
 {
-    static auto sink = std::make_shared<sinks::msvc_sink_mt>();
+    static auto sink = std::make_shared<sinks::debug_sink_mt>();
     static auto logger = std::make_shared<spdlog::logger>("xll", sink);
 
     std::once_flag flag;

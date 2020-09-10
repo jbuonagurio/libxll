@@ -12,7 +12,7 @@
 #include <xll/constants.hpp>
 #include <xll/detail/assert.hpp>
 #include <xll/detail/callback.hpp>
-#include <xll/detail/tagged_union.hpp>
+#include <xll/detail/variant.hpp>
 #include <xll/log.hpp>
 
 #include <boost/winapi/dll.hpp>
@@ -32,28 +32,28 @@ namespace xll {
  */
 
 template <class R, class V, std::size_t N>
-inline XLRET Excel12v(int xlfn, R *result, std::array<V*, N>& opers, std::size_t count = N)
+inline int Excel12v(int xlfn, R *result, std::array<V*, N>& opers, std::size_t count = N)
 {
     static_assert(N <= 255, "parameter count exceeds Excel 12 limit");
-    static_assert(std::is_base_of_v<detail::tagged_union, V>, "invalid operand type");
-    static_assert(std::is_base_of_v<detail::tagged_union, R>, "invalid result type");
+    static_assert(std::is_base_of_v<detail::variant_common_type, V>, "invalid operand type");
+    static_assert(std::is_base_of_v<detail::variant_common_type, R>, "invalid result type");
 
     auto pfn = detail::MdCallBack12<R, V>();
-    XLL_ASSERT(pfn != nullptr);
 	if (pfn == nullptr)
-        return XLRET::xlretAbort;
+        return XLRET::xlretFailed;
     
-    int retval = (pfn)(xlfn, static_cast<int>(count), opers.data(), result);
-    XLRET rc = static_cast<XLRET>(retval);
+    int rc = (pfn)(xlfn, static_cast<int>(count), opers.data(), result);
     if (rc != XLRET::xlretSuccess) {
-        xll::log()->error("Callback failed: {}, xlfn {}", rc, xlfn);
+        xll::log()->error("Callback failed: xlfn {}, return code {:#06x}", xlfn, rc);
+        return rc;
     }
     
     // Set xlBitXLFree on return value from C API. xlFree is called in the destructor.
     if (result) {
-        uint32_t xt = result->xltype();
+        auto *p = reinterpret_cast<detail::variant_opaque_ptr>(result);
+        uint32_t xt = p->xltype();
         if (xt == xltypeStr || xt == xltypeRef || xt == xltypeMulti) {
-            result->set_flags(xlbitXLFree);
+            p->set_flags(xlbitXLFree);
         }
     }
     
@@ -61,28 +61,26 @@ inline XLRET Excel12v(int xlfn, R *result, std::array<V*, N>& opers, std::size_t
 }
 
 template <class R>
-inline XLRET Excel12(int xlfn, R *result)
+inline int Excel12(int xlfn, R *result)
 {
     std::array<R*, 1> opers{ nullptr };
     return Excel12v(xlfn, result, opers);
 }
 
 template <class R, class... Args>
-inline XLRET Excel12(int xlfn, R *result, Args*... args)
+inline int Excel12(int xlfn, R *result, Args*... args)
 {
-    std::array<detail::tagged_union *, sizeof...(Args)> opers =
-        {( static_cast<detail::tagged_union *>(args), ... )};
-    
+    std::array<detail::variant_common_type *, sizeof...(Args)> opers =
+        {( static_cast<detail::variant_common_type *>(args), ... )};
     return Excel12v(xlfn, result, opers);
 }
 
 template <class... Args>
-inline XLRET Excel12(int xlfn, std::nullptr_t, Args*... args)
+inline int Excel12(int xlfn, std::nullptr_t, Args*... args)
 {
-    std::array<detail::tagged_union *, sizeof...(Args)> opers =
-        {( static_cast<detail::tagged_union *>(args), ... )};
-    
-    return Excel12v<detail::tagged_union>(xlfn, nullptr, opers);
+    std::array<detail::variant_common_type *, sizeof...(Args)> opers =
+        {( static_cast<detail::variant_common_type *>(args), ... )};
+    return Excel12v<detail::variant_common_type>(xlfn, nullptr, opers);
 }
 
 } // namespace xll

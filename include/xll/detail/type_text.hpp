@@ -17,7 +17,7 @@
 
 #include <xll/attributes.hpp>
 #include <xll/fp12.hpp>
-#include <xll/xloper12.hpp>
+#include <xll/xloper.hpp>
 #include <xll/pstring.hpp>
 #include <xll/detail/type_traits.hpp>
 
@@ -43,18 +43,18 @@ struct is_array_type<static_fp12<N> *> : std::true_type {};
 // Variable-type worksheet values and arrays (XLOPER12)
 template <class T, class U = void>
 struct type_text_arg {
-    static_assert(!std::is_base_of_v<detail::tagged_union, T>, "invalid operand type");
+    static_assert(!std::is_base_of_v<detail::variant_common_type, T>, "invalid operand type");
     static constexpr std::array<wchar_t, 1> value = { L'Q' };
 };
 
 template <class T>
-struct type_text_arg<T, std::enable_if_t<std::is_same_v<T, variant12 *>>> {
+struct type_text_arg<T, std::enable_if_t<std::is_same_v<T, variant *>>> {
     static constexpr std::array<wchar_t, 1> value = { L'Q' };
 };
 
 // Asynchronous call handle (XLOPER12, xlTypeBigData)
 template <class T>
-struct type_text_arg<T, std::enable_if_t<std::is_same_v<T, handle12 *>>> {
+struct type_text_arg<T, std::enable_if_t<std::is_same_v<T, handle *>>> {
     static constexpr std::array<wchar_t, 1> value = { L'X' };
 };
 
@@ -158,6 +158,11 @@ struct attribute_text_arg<tag::thread_safe> {
     static constexpr std::array<wchar_t, 1> value = { L'$' };
 };
 
+template <>
+struct attribute_text_arg<tag::macro_sheet_equivalent> {
+    static constexpr std::array<wchar_t, 1> value = { L'#' };
+};
+
 // Get a pxTypeText wchar array for a callable type. Concatenates the
 // pxTypeText wchar arrays for the return type, arguments and attributes
 // at compile-time using tuples.
@@ -178,27 +183,35 @@ struct attribute_text_arg<tag::thread_safe> {
 //   - Add '!' to end of type text
 // - Thread Safe
 //   - Add '$' to end of type text
+// - Macro Sheet Equivalent
+//   - Cannot be combined with Thread Safe or Cluster Safe
+//   - Handled as Volatile when using type 'R' or type 'U' arguments.
+//   - Add '#' to end of type text
 
 template<class Result, class... Args, class... Tags>
 constexpr auto type_text_impl(attribute_set<Tags...>)
 {
     using namespace boost::mp11;
 
-    static_assert(!mp_any<std::is_void<Args>...>::value,
-        "arguments cannot be void");
-    
-    using async_handle_count = mp_count<mp_list<Args...>, handle12 *>;
-    static_assert(mp_less<async_handle_count, mp_size_t<2>>::value,
-        "multiple async handles in argument list");
-
+    using async_handle_count = mp_count<mp_list<Args...>, handle *>;
     using is_asynchronous = mp_to_bool<async_handle_count>;
     using has_void_return = std::is_void<Result>;
-    static_assert(!std::is_same_v<is_asynchronous, has_void_return>,
-        "async functions must have void return type");
-        
     using is_cluster_safe = mp_contains<mp_list<Tags...>, tag::cluster_safe>;
-    static_assert(std::is_same_v<is_asynchronous, is_cluster_safe>,
+    using is_thread_safe = mp_contains<mp_list<Tags...>, tag::thread_safe>;
+    using is_macro_sheet_equivalent = mp_contains<mp_list<Tags...>, tag::macro_sheet_equivalent>;
+
+    static_assert(!mp_any<std::is_void<Args>...>::value,
+        "arguments cannot be void");
+    static_assert(mp_less<async_handle_count, mp_size_t<2>>::value,
+        "multiple async handles in argument list");
+    static_assert(!mp_all<is_asynchronous, mp_not<has_void_return>>::value,
+        "async functions must have void return type");
+    static_assert(!mp_all<is_asynchronous, is_cluster_safe>::value,
         "async functions cannot be cluster-safe");
+    static_assert(!mp_all<is_macro_sheet_equivalent, is_thread_safe>::value,
+        "macro sheet equivalent functions cannot be thread-safe");
+    static_assert(!mp_all<is_macro_sheet_equivalent, is_cluster_safe>::value,
+        "macro sheet equivalent functions cannot be cluster-safe");
 
     // Construct tuple using std::tuple_cat specialization for std:array.
     constexpr auto tuple = std::tuple_cat(

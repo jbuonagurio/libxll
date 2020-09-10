@@ -29,7 +29,7 @@
 
 namespace xll {
 
-using variant12 = detail::variant<
+using variant = detail::variant_base<
     xlnum,
     xlstr,
     xlbool,
@@ -43,16 +43,13 @@ using variant12 = detail::variant<
     xlmissing,
     xlnil>;
 
-//
-// XLOPER12 value types
-//
-
 template <class T>
-using xloper12 = detail::variant<T>;
+using xloper = detail::variant_base<T>;
 
-using handle12 = detail::variant<xlbigdata>;
+// Used for async call handle parameters.
+using handle = detail::variant_base<xlbigdata>;
 
 template <std::size_t N>
-using literal12 = detail::variant<basic_pstring_literal<wchar_t, N>>;
+using literal = detail::variant_base<basic_pstring_literal<wchar_t, N>>;
 
 } // namespace xll

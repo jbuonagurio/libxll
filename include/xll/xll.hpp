@@ -15,7 +15,7 @@
 
 #include <xll/constants.hpp>
 #include <xll/fp12.hpp>
-#include <xll/xloper12.hpp>
+#include <xll/xloper.hpp>
 
 #include <xll/functions.hpp>
 #include <xll/callback.hpp>

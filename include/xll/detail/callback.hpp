@@ -18,12 +18,12 @@
 namespace xll {
 namespace detail {
 
-template <class R, class V>
+template <class R = void, class V = void>
 using EXCEL12PROC = int (__stdcall *)(int xlfn, int coper, V **rgpvalue12, R *value12Res);
 
 using LPENHELPERPROC = int (__stdcall *)(int wCode, void *lpv);
 
-template <class R, class V>
+template <class R = void, class V = void>
 BOOST_FORCEINLINE EXCEL12PROC<R, V> MdCallBack12()
 {
 #if BOOST_OS_WINDOWS

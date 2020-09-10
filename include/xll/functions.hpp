@@ -11,7 +11,7 @@
 
 #include <xll/constants.hpp>
 #include <xll/callback.hpp>
-#include <xll/xloper12.hpp>
+#include <xll/xloper.hpp>
 
 #include <array>
 #include <memory>
@@ -20,63 +20,87 @@ namespace xll {
 
 /// Returns the full path and file name of the DLL as xltypeStr.
 /// \sa https://docs.microsoft.com/en-us/office/client-developer/excel/xlgetname
-inline std::unique_ptr<variant12> get_name()
+inline xlstr get_name()
 {
-    auto result = std::make_unique<variant12>();
-    Excel12(xlGetName, result.get());
-    return std::move(result);
+    variant result;
+    int rc = Excel12(xlGetName, &result);
+    if (rc != XLRET::xlretSuccess && result.xltype() != xltypeStr)
+        return {};
+    return result.get<xlstr>();
 }
 
 /// Returns the number of bytes remaining on the stack.
 /// \sa https://docs.microsoft.com/en-us/office/client-developer/excel/xlstack
 inline int stack_size()
 {
-    variant12 result;
-    XLRET rc = Excel12(xlStack, &result);
+    variant result;
+    int rc = Excel12(xlStack, &result);
     if (rc != XLRET::xlretSuccess && result.xltype() != xltypeInt)
         return 0;
+    return static_cast<int>(result.get<xlint>());
+}
+
+/// Returns the window handle of the top-level Microsoft Excel window.
+/// \sa https://docs.microsoft.com/en-us/office/client-developer/excel/xlgethwnd
+inline int get_hwnd()
+{
+    variant result;
+    int rc = Excel12(xlGetHwnd, &result);
+    if (rc != XLRET::xlretSuccess && result.xltype() != xltypeInt)
+        return 0; // Invalid HWND
     return static_cast<int>(result.get<xlint>());
 }
 
 /// Converts one type of XLOPER to another, if possible.
 /// \sa https://docs.microsoft.com/en-us/office/client-developer/excel/xlcoerce
 template <XLTYPE... Ts>
-inline std::unique_ptr<variant12> coerce(variant12& source)
+inline variant coerce(variant& source)
 {
     constexpr int flags = (Ts | ...);
-    auto result = std::make_unique<variant12>();
-    auto result_types = std::make_unique<xloper12<xlint>>(flags);
-    Excel12(xlCoerce, result.get(), &source, result_types.get());
-    return std::move(result);
+    variant result;
+    xloper<xlint> types(flags);
+    Excel12(xlCoerce, &result, &source, &types);
+    return result;
 }
+
+/// Returns the ID of a named sheet.
+/// \sa https://docs.microsoft.com/en-us/office/client-developer/excel/xlsheetid
+//Excel12(xlSheetId, LPXLOPER12 pxRes, 1, LPXLOPER12 pxSheetName);
+
+// xlSheetNm
+/// Returns the name of a worksheet or macro sheet from its internal sheet ID.
+/// \sa https://docs.microsoft.com/en-us/office/client-developer/excel/xlsheetnm
+//Excel12(xlSheetNm, LPXLOPER12 pxRes, 1, LPXLOPER12 pxExtref);
+
+/// Puts constant values into cells or ranges very quickly.
+/// \sa https://docs.microsoft.com/en-us/office/client-developer/excel/xlset
+//Excel12(xlSet, LPXLOPER12 pxRes, 2, LPXLOPER12 pxReference, LPXLOPER pxValue);
 
 /// Display a message box using xlcAlert.
 /// \param[in] text The text to be displayed.
 /// \param[in] type Dialog type: 1 = OK/Cancel, 2 = Info, 3 = Warning
-inline XLRET message_box(const std::wstring& text, int type = 2)
+inline int message_box(const std::wstring& text, int type = 2)
 {
-    auto arg1 = std::make_unique<xloper12<xlint>>(type);
-    auto arg2 = std::make_unique<xloper12<xlstr>>(text);
-    return Excel12(xlcAlert, nullptr, arg1.get(), arg2.get());
+    xloper<xlint> arg1(type);
+    xloper<xlstr> arg2(text);
+    return Excel12(xlcAlert, nullptr, &arg1, &arg2);
 }
 
 /// Display text in the status bar using xlcMessage.
 /// \param[in] text The text to be displayed.
-inline XLRET status_bar(const std::wstring& text)
+inline int status_bar(const std::wstring& text)
 {
-    auto arg1 = std::make_unique<xloper12<xlbool>>(true);
-    auto arg2 = std::make_unique<xloper12<xlstr>>(text);
-    return Excel12(xlcMessage, nullptr, arg1.get(), arg2.get());
+    xloper<xlbool> arg1((xlbool)true);
+    xloper<xlstr> arg2(text);
+    return Excel12(xlcMessage, nullptr, &arg1, &arg2);
 }
 
 /// Return the result of an asynchronous UDF.
 /// \sa https://docs.microsoft.com/en-us/office/client-developer/excel/xlasyncreturn
-inline bool async_return(const xloper12<xlbigdata>& handle, const variant12& value)
+inline bool async_return(xloper<xlbigdata>& handle, variant& value)
 {
-    auto arg1 = std::make_unique<xloper12<xlbigdata>>(handle);
-    auto arg2 = std::make_unique<variant12>(value);
-    variant12 result;
-    XLRET rc = Excel12(xlAsyncReturn, &result, arg1.get(), arg2.get());
+    variant result;
+    int rc = Excel12(xlAsyncReturn, &result, &handle, &value);
     if (rc != XLRET::xlretSuccess && result.xltype() != xltypeBool)
         return false;
     return static_cast<bool>(result.get<xlbool>());
@@ -86,24 +110,22 @@ inline bool async_return(const xloper12<xlbigdata>& handle, const variant12& val
 /// \sa https://docs.microsoft.com/en-us/office/client-developer/excel/xleventregister
 inline bool register_event(const std::wstring& procedure, XLEVENT event)
 {
-    auto arg1 = std::make_unique<xloper12<xlstr>>(procedure);
-    auto arg2 = std::make_unique<xloper12<xlint>>(event);
-    variant12 result;
-    XLRET rc = Excel12(xlEventRegister, &result, arg1.get(), arg2.get());
+    xloper<xlstr> arg1(procedure);
+    xloper<xlint> arg2(event);
+    variant result;
+    int rc = Excel12(xlEventRegister, &result, &arg1, &arg2);
     if (rc != XLRET::xlretSuccess && result.xltype() != xltypeBool)
         return false;
+    return static_cast<bool>(result.get<xlbool>());
 }
 
 /// Unloads and deactivates the DLL.
 /// \sa https://docs.microsoft.com/en-us/office/client-developer/excel/xlfunregister-form-2
 inline bool unload()
 {
-    std::unique_ptr<variant12> name = get_name();
-    if (!name)
-        return false;
-    
-    variant12 result;
-    XLRET rc = Excel12(xlfUnregister, &result, name.get());
+    variant result;
+    variant name(get_name());
+    int rc = Excel12(xlfUnregister, &result, &name);
     if (rc != XLRET::xlretSuccess && result.xltype() != xltypeBool)
         return false;
     return static_cast<bool>(result.get<xlbool>());
@@ -113,9 +135,9 @@ inline bool unload()
 /// \sa https://docs.microsoft.com/en-us/office/client-developer/excel/xlfunregister-form-1
 inline bool unregister(double id)
 {
-    auto idvar = std::make_unique<xloper12<xlnum>>(id);
-    variant12 result;
-    XLRET rc = Excel12(xlfUnregister, &result, idvar.get());
+    xloper<xlnum> idvar(id);
+    variant result;
+    int rc = Excel12(xlfUnregister, &result, &idvar);
     if (rc != XLRET::xlretSuccess && result.xltype() != xltypeBool)
         return false;
     return static_cast<bool>(result.get<xlbool>());
@@ -125,8 +147,8 @@ inline bool unregister(double id)
 /// \sa https://docs.microsoft.com/en-us/office/client-developer/excel/xlabort
 inline bool check_interrupt()
 {
-    variant12 result;
-    XLRET rc = Excel12(xlAbort, &result);
+    variant result;
+    int rc = Excel12(xlAbort, &result);
     if (rc != XLRET::xlretSuccess && result.xltype() != xltypeBool)
         return false;
     return static_cast<bool>(result.get<xlbool>());

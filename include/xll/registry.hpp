@@ -13,7 +13,7 @@
 #include <xll/constants.hpp>
 #include <xll/callback.hpp>
 #include <xll/functions.hpp>
-#include <xll/xloper12.hpp>
+#include <xll/xloper.hpp>
 #include <xll/detail/type_text.hpp>
 #include <xll/log.hpp>
 
@@ -77,34 +77,34 @@ private:
     static inline std::mutex mutex_; // C++17
 };
 
-// Index    Name                   Type        Alt. Type
-// -----    -------------------    ---------   ---------
-//     0    pxModuleText           xltypeStr   
-//     1    pxProcedure            xltypeStr   xltypeNum
-//     2    pxTypeText             xltypeStr   
-//     3    pxFunctionText         xltypeStr   
-//     4    pxArgumentText         xltypeStr   
-//     5    pxMacroType            xltypeInt   xltypeNum
-//     6    pxCategory             xltypeStr   xltypeNum
-//     7    pxShortcutText         xltypeStr   
-//     8    pxHelpTopic            xltypeStr   
-//     9    pxFunctionHelp         xltypeStr   
-//    10    pxArgumentHelp[245]    xltypeStr   
+// Index    Name                   Type         Alt. Type
+// -----    -------------------    ---------    ---------
+//     0    pxModuleText           xltypeStr    
+//     1    pxProcedure            xltypeStr    xltypeNum
+//     2    pxTypeText             xltypeStr    
+//     3    pxFunctionText         xltypeStr    
+//     4    pxArgumentText         xltypeStr    
+//     5    pxMacroType            xltypeInt    xltypeNum
+//     6    pxCategory             xltypeStr    xltypeNum
+//     7    pxShortcutText         xltypeStr    
+//     8    pxHelpTopic            xltypeStr    
+//     9    pxFunctionHelp         xltypeStr    
+//    10    pxArgumentHelp[245]    xltypeStr    
 
 template <class F, class... Tags>
 inline double register_function(F ptr, const std::wstring& dll_alias,
     const std::wstring& function_text, const function_options& opts = {},
-    const attribute_set<Tags...>& attrs = {})
+    attribute_set<Tags...> = {})
 {
-    std::array<variant12, 255> args;
+    std::array<variant, 255> args;
 
-    std::once_flag flag;
-    std::call_once(flag, [&](){
-        Excel12(xlGetName, &args[0]);
-    });
+    static xlstr dll = get_name();
+    
+    constexpr auto tt = make_wpstring_array(detail::type_text(F(), attribute_set<Tags...>()));
 
+    args[0].emplace<xlstr>(dll);
     args[1].emplace<xlstr>(dll_alias);
-    args[2].emplace<xlstr>(make_wpstring_array(detail::type_text(ptr, attrs)));
+    args[2].emplace<xlstr>(tt);
     args[3].emplace<xlstr>(function_text);
     args[4].emplace<xlstr>(opts.argument_text);
     args[5].emplace<xlint>(opts.macro_type);
@@ -123,15 +123,15 @@ inline double register_function(F ptr, const std::wstring& dll_alias,
         }
     }
 
-    std::array<variant12 *, 255> pargs;
+    std::array<variant *, 255> pargs;
     for (std::size_t i = 0; i < nargs; ++i) {
         pargs[i] = &args[i];
     }
     
-    variant12 idvar;
-    XLRET rc = Excel12v(xlfRegister, &idvar, pargs, nargs);
+    variant idvar;
+    int rc = Excel12v(xlfRegister, &idvar, pargs, nargs);
     if (rc != XLRET::xlretSuccess || idvar.xltype() != xltypeNum) {
-        xll::log()->error("Registration failed: {}", rc);
+        xll::log()->error("Registration failed: return code {:#06x}", rc);
         return 0.0;
     }
 
