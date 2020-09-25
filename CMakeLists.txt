@@ -31,6 +31,8 @@ endif()
 
 project(xll LANGUAGES CXX)
 
+include(CTest)
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -41,7 +43,10 @@ set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 set(BUILD_SHARED_LIBS ON)
 
 # Options
-option(XLL_USE_SPDLOG "Enable debug logging wth spdlog" ON)
+option(XLL_USE_SPDLOG "Enable debug logging wth spdlog" OFF)
+
+option(BUILD_EXAMPLES "Build examples" ON)
+option(BUILD_TESTING "Build tests" ON)
 
 # Dependencies
 find_package(Boost REQUIRED)
@@ -66,7 +71,31 @@ if(XLL_USE_SPDLOG)
 endif()
 
 if(BUILD_TESTING)
-  #add_subdirectory(test)
-  add_executable(test ${CMAKE_CURRENT_SOURCE_DIR}/test/main.cpp)
-  target_link_libraries(test PRIVATE xll)
+  add_executable(test_pstring ${CMAKE_CURRENT_SOURCE_DIR}/test/test_pstring.cpp)
+  target_link_libraries(test_pstring PRIVATE xll)
+  add_test(test_pstring test_pstring)
+
+  add_executable(test_register ${CMAKE_CURRENT_SOURCE_DIR}/test/test_register.cpp)
+  target_link_libraries(test_register PRIVATE xll)
+  add_test(test_register test_register)  
+
+  add_executable(test_xloper ${CMAKE_CURRENT_SOURCE_DIR}/test/test_xloper.cpp)
+  target_link_libraries(test_xloper PRIVATE xll)
+  add_test(test_xloper test_xloper)
+
+  set_tests_properties(test_pstring test_register test_xloper PROPERTIES
+    FAIL_REGULAR_EXPRESSION "[^a-z]Failed")
+endif()
+
+if(BUILD_EXAMPLES)
+  add_library(generic SHARED
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/examples/generic/addin.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/examples/generic/addin.def)
+  if(MSVC)
+    target_compile_options(generic PRIVATE /W4)
+  endif()
+  target_link_libraries(generic PRIVATE xll)
+  set_target_properties(generic PROPERTIES
+    OUTPUT_NAME "generic"
+    SUFFIX ".xll")
 endif()
