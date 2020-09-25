@@ -15,8 +15,6 @@
 #include <xll/detail/memory.hpp>
 #include <xll/detail/variant.hpp>
 
-#include <boost/core/alloc_construct.hpp>
-
 #include <algorithm>
 #include <initializer_list>
 #include <iterator>
@@ -231,7 +229,6 @@ struct xlmulti : detail::xlmulti_base<
 
         std::size_t n = static_cast<std::size_t>(rows_ * cols_);
         lparray = alloc().allocate(n);
-        auto it = list.begin();
         pointer current = lparray;
 
         for (const auto& row : list) {
