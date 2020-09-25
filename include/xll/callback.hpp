@@ -67,7 +67,7 @@ inline int Excel12(int xlfn, R *result)
     return Excel12v(xlfn, result, opers);
 }
 
-#ifdef __clang__
+#if BOOST_COMP_CLANG
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-value"
 #endif
@@ -88,7 +88,7 @@ inline int Excel12(int xlfn, std::nullptr_t, Args*... args)
     return Excel12v<detail::variant_common_type>(xlfn, nullptr, opers);
 }
 
-#ifdef __clang__
+#if BOOST_COMP_CLANG
 #pragma clang diagnostic pop
 #endif
 

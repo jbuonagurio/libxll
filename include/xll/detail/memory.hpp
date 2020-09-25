@@ -14,7 +14,7 @@
 #include <new>
 #include <type_traits>
 
-#if BOOST_OS_WINDOWS
+#if BOOST_COMP_MSVC
 #include <intrin.h> // __readgsqword, __readfsdword
 #endif
 
@@ -31,10 +31,10 @@ T launder_cast(U* u)
 #endif
 }
 
-#if BOOST_OS_WINDOWS
+#if BOOST_COMP_MSVC
 BOOST_FORCEINLINE std::uintptr_t stack_base()
 {
-#ifdef _WIN64
+#if BOOST_ARCH_X86_64
     return __readgsqword(0x08); // offsetof(NT_TIB64, StackBase)
 #else
     return __readfsdword(0x04); // offsetof(NT_TIB, StackBase)
@@ -43,13 +43,13 @@ BOOST_FORCEINLINE std::uintptr_t stack_base()
 
 BOOST_FORCEINLINE std::uintptr_t stack_limit()
 {
-#ifdef _WIN64
+#if BOOST_ARCH_X86_64
     return __readgsqword(0x10); // offsetof(NT_TIB64, StackLimit)
 #else
     return __readfsdword(0x08); // offsetof(NT_TIB, StackLimit)
 #endif
 }
-#endif // BOOST_OS_WINDOWS
+#endif // BOOST_COMP_MSVC
 
 // Used for empty base optimization.
 template<class Allocator>
