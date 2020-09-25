@@ -67,6 +67,9 @@ inline int Excel12(int xlfn, R *result)
     return Excel12v(xlfn, result, opers);
 }
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-value"
+
 template<class R, class... Args>
 inline int Excel12(int xlfn, R *result, Args*... args)
 {
@@ -82,5 +85,7 @@ inline int Excel12(int xlfn, std::nullptr_t, Args*... args)
         {( static_cast<detail::variant_common_type *>(args), ... )};
     return Excel12v<detail::variant_common_type>(xlfn, nullptr, opers);
 }
+
+#pragma clang diagnostic pop
 
 } // namespace xll

@@ -275,7 +275,7 @@ public:
         { internal_copy(s); }
     
     // UTF-8 to UTF-16
-    template<typename FromCharT = T, std::enable_if_t<(sizeof(FromCharT) < sizeof(CharT))>* = nullptr>
+    template<class FromCharT, std::enable_if_t<(sizeof(FromCharT) < sizeof(CharT))>* = nullptr>
     basic_pstring(const FromCharT *s)
     {
         const size_type nchars = static_cast<size_type>(
@@ -285,7 +285,7 @@ public:
     }
 
     // UTF-8 to UTF-16
-    template<typename FromCharT = T, std::enable_if_t<(sizeof(FromCharT) < sizeof(CharT))>* = nullptr>
+    template<class FromCharT, std::enable_if_t<(sizeof(FromCharT) < sizeof(CharT))>* = nullptr>
     basic_pstring(const std::basic_string<FromCharT>& s)
     {
         const FromCharT *cs = s.c_str();
@@ -296,7 +296,7 @@ public:
     }
 
     // UTF-16 to UTF-8
-    template<typename FromCharT = T, std::enable_if_t<(sizeof(FromCharT) > sizeof(CharT))>* = nullptr>
+    template<class FromCharT, std::enable_if_t<(sizeof(FromCharT) > sizeof(CharT))>* = nullptr>
     basic_pstring(const FromCharT *s)
     {
         const size_type nchars = static_cast<size_type>(
@@ -306,7 +306,7 @@ public:
     }
 
     // UTF-16 to UTF-8
-    template<typename FromCharT = T, std::enable_if_t<(sizeof(FromCharT) > sizeof(CharT))>* = nullptr>
+    template<class FromCharT, std::enable_if_t<(sizeof(FromCharT) > sizeof(CharT))>* = nullptr>
     basic_pstring(const std::basic_string<FromCharT>& s)
     {
         const FromCharT *cs = s.c_str();
@@ -335,12 +335,12 @@ public:
     }
 
     // UTF-16 to UTF-8
-    template<typename ToCharT = T, std::enable_if_t<(sizeof(ToCharT) < sizeof(CharT))>* = nullptr>
+    template<class ToCharT, std::enable_if_t<(sizeof(ToCharT) < sizeof(CharT))>* = nullptr>
     operator std::basic_string<ToCharT>() const
         { return boost::nowide::narrow(data(), size()); }
 
     // UTF-8 to UTF-16
-    template<typename ToCharT = T, std::enable_if_t<(sizeof(ToCharT) > sizeof(CharT))>* = nullptr>
+    template<class ToCharT, std::enable_if_t<(sizeof(ToCharT) > sizeof(CharT))>* = nullptr>
     operator std::basic_string<ToCharT>() const
         { return boost::nowide::widen(data(), size()); }
 
@@ -380,7 +380,7 @@ public:
         return os << std::basic_string_view<CharT>{ &s.data_[1], n };
     }
 
-    template<typename ToCharT = T, std::enable_if_t<(sizeof(ToCharT) != sizeof(CharT))>* = nullptr>
+    template<class ToCharT, std::enable_if_t<(sizeof(ToCharT) != sizeof(CharT))>* = nullptr>
     friend std::basic_ostream<ToCharT>& operator<<(std::basic_ostream<ToCharT>& os, const basic_pstring& s)
         { return os << std::basic_string<ToCharT>(s); }
 };
