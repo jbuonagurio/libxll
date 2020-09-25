@@ -8,7 +8,6 @@
 #pragma once
 
 #include <xll/config.hpp>
-
 #include <xll/constants.hpp>
 #include <xll/callback.hpp>
 #include <xll/detail/assert.hpp>
@@ -40,11 +39,13 @@ namespace detail {
 
 namespace mp11 = boost::mp11;
 
-// Overload resolution based on P0608R3: "A sane variant converting constructor"
-// https://wg21.link/p0608
+// Overload resolution based on:
+// P0608R3 "A sane variant converting constructor" (https://wg21.link/p0608)
+// P0870R0 "A proposal for a type trait to detect narrowing conversions" (https://wg21.link/p0870)
 
 template<class T> using remove_cvref_t = std::remove_cv_t<std::remove_reference_t<T>>;
 
+// Returns mp_identity<T> if U is non-narrowing convertible to T
 struct narrowing_check_impl
 {
     template<class T>
@@ -56,46 +57,34 @@ struct narrowing_check_impl
 
 template<class T, class U> using narrowing_check = mp11::mp_if<std::is_arithmetic<T>, mp11::mp_identity<T>, mp11::mp_invoke_q<narrowing_check_impl, T, U>>;
 
-template<class... T> struct overload;
+template<class T> struct overload
+{
+    template<class U>
+    auto operator()(T, U&&) const -> narrowing_check<T, U>;
+};
 
-template<> struct overload<>
+template<class T> struct overload_bool
+{
+    template<class U, class Ud = remove_cvref_t<U>>
+    auto operator()(bool, U&&) const -> mp11::mp_if<std::is_same<Ud, bool>, mp11::mp_identity<T>>;
+};
+
+template<> struct overload<bool> : overload_bool<bool> {};
+template<> struct overload<const bool> : overload_bool<const bool> {};
+template<> struct overload<volatile bool> : overload_bool<volatile bool> {};
+template<> struct overload<const volatile bool> : overload_bool<const volatile bool> {};
+
+template<class... T> struct overloads : T...
 {
     void operator()() const;
+    using T::operator()...; // C++17
 };
 
-template<class T1, class... T> struct overload<T1, T...> : overload<T...>
-{
-    using overload<T...>::operator();
-    template<class U> auto operator()(T1, U&&) const -> narrowing_check<T1, U>;
-};
+template<class U, class... T>
+using resolve_overload_type = typename std::invoke_result_t<overloads<overload<T>...>, U, U>::type;
 
-template<class... T> struct overload<bool, T...> : overload<T...>
-{
-    using overload<T...>::operator();
-    template<class U> auto operator()(bool, U&&) const -> mp11::mp_if<std::is_same<remove_cvref_t<U>, bool>, mp11::mp_identity<bool>>;
-};
-
-template<class... T> struct overload<const bool, T...> : overload<T...>
-{
-    using overload<T...>::operator();
-    template<class U> auto operator()(bool, U&&) const -> mp11::mp_if<std::is_same<remove_cvref_t<U>, bool>, mp11::mp_identity<const bool>>;
-};
-
-template<class... T> struct overload<volatile bool, T...> : overload<T...>
-{
-    using overload<T...>::operator();
-    template<class U> auto operator()(bool, U&&) const -> mp11::mp_if<std::is_same<remove_cvref_t<U>, bool>, mp11::mp_identity<volatile bool>>;
-};
-
-template<class... T> struct overload<const volatile bool, T...> : overload<T...>
-{
-    using overload<T...>::operator();
-    template<class U> auto operator()(bool, U&&) const -> mp11::mp_if<std::is_same<remove_cvref_t<U>, bool>, mp11::mp_identity<const volatile bool>>;
-};
-
-template<class U, class... T> using resolve_overload_type = typename decltype(overload<T...>()(std::declval<U>(), std::declval<U>()))::type;
-template<class U, class... T> using resolve_overload_index = mp11::mp_find<mp11::mp_list<T...>, resolve_overload_type<U, T...>>;
-
+template<class U, class... T>
+using resolve_overload_index = mp11::mp_find<mp11::mp_list<T...>, resolve_overload_type<U, T...>>;
 
 // Variant implementation based on Boost.Variant2:
 // Copyright 2017-2019 Peter Dimov.
