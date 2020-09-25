@@ -26,7 +26,7 @@
 namespace xll {
 namespace detail {
 
-template <class CharT, std::size_t N>
+template<class CharT, std::size_t N>
 struct basic_pstring_literal_impl
 {
     static_assert(N < std::numeric_limits<CharT>::max(),
@@ -40,7 +40,7 @@ protected:
     const CharT data_[1 + N];
 
 public:
-    template <class... Chars>
+    template<class... Chars>
     constexpr basic_pstring_literal_impl(Chars... args)
         : data_{static_cast<CharT>(N), args...}
     {}
@@ -83,11 +83,11 @@ public:
 } // namespace detail
 
 /// Generates pascal string from a C string literal at compile-time.
-template <class CharT, std::size_t N>
+template<class CharT, std::size_t N>
 struct basic_pstring_literal : public detail::basic_pstring_literal_impl<CharT, N - 1>
 {
 protected:
-    template <std::size_t... Is>
+    template<std::size_t... Is>
     constexpr basic_pstring_literal(const CharT(&str)[N], std::index_sequence<Is...>)
         : detail::basic_pstring_literal_impl<CharT, N - 1>(str[Is]...)
     {}
@@ -99,11 +99,11 @@ public:
 };
 
 /// Generates pascal string from std::array at compile-time.
-template <class CharT, std::size_t N>
+template<class CharT, std::size_t N>
 struct basic_pstring_array : public detail::basic_pstring_literal_impl<CharT, N>
 {
 protected:
-    template <std::size_t... Is>
+    template<std::size_t... Is>
     constexpr basic_pstring_array(const std::array<CharT, N>& arr, std::index_sequence<Is...>)
         : detail::basic_pstring_literal_impl<CharT, N>(arr[Is]...)
     {}
@@ -118,49 +118,49 @@ public:
     {}
 };
 
-template <std::size_t N>
+template<std::size_t N>
 using pstring_literal = basic_pstring_literal<char, N>;
 
-template <std::size_t N>
+template<std::size_t N>
 using wpstring_literal = basic_pstring_literal<wchar_t, N>;
 
-template <std::size_t N>
+template<std::size_t N>
 using pstring_array = basic_pstring_array<char, N>;
 
-template <std::size_t N>
+template<std::size_t N>
 using wpstring_array = basic_pstring_array<wchar_t, N>;
 
-template <std::size_t N>
+template<std::size_t N>
 constexpr pstring_literal<N> make_pstring_literal(const char(&str)[N])
 {
     return pstring_literal<N>(str);
 }
 
-template <std::size_t N>
+template<std::size_t N>
 constexpr wpstring_literal<N> make_wpstring_literal(const wchar_t(&str)[N])
 {
     return wpstring_literal<N>(str);
 }
 
-template <std::size_t N>
+template<std::size_t N>
 constexpr pstring_array<N> make_pstring_array(std::array<char, N>&& arr)
 {
     return pstring_array<N>(arr);
 }
 
-template <std::size_t N>
+template<std::size_t N>
 constexpr pstring_array<N> make_pstring_array(const std::array<char, N>& arr)
 {
     return pstring_array<N>(arr);
 }
 
-template <std::size_t N>
+template<std::size_t N>
 constexpr wpstring_array<N> make_wpstring_array(std::array<wchar_t, N>&& arr)
 {
     return wpstring_array<N>(arr);
 }
 
-template <std::size_t N>
+template<std::size_t N>
 constexpr wpstring_array<N> make_wpstring_array(const std::array<wchar_t, N>& arr)
 {
     return wpstring_array<N>(arr);
@@ -178,7 +178,7 @@ constexpr wpstring_array<N> make_wpstring_array(const std::array<wchar_t, N>& ar
 
 namespace xll {
 
-template <class CharT> // class Allocator
+template<class CharT> // class Allocator
 struct basic_pstring
 {
     static_assert(sizeof(CharT) <= sizeof(wchar_t), "unsupported character type");
@@ -262,7 +262,7 @@ public:
         return *this;
     }
 
-    template <std::size_t N>
+    template<std::size_t N>
     explicit basic_pstring(const detail::basic_pstring_literal_impl<CharT, N>& s)
         { internal_copy(s.data(), static_cast<size_type>(N)); }
 
@@ -275,7 +275,7 @@ public:
         { internal_copy(s); }
     
     // UTF-8 to UTF-16
-    template <typename FromCharT = T, std::enable_if_t<(sizeof(FromCharT) < sizeof(CharT))>* = nullptr>
+    template<typename FromCharT = T, std::enable_if_t<(sizeof(FromCharT) < sizeof(CharT))>* = nullptr>
     basic_pstring(const FromCharT *s)
     {
         const size_type nchars = static_cast<size_type>(
@@ -285,7 +285,7 @@ public:
     }
 
     // UTF-8 to UTF-16
-    template <typename FromCharT = T, std::enable_if_t<(sizeof(FromCharT) < sizeof(CharT))>* = nullptr>
+    template<typename FromCharT = T, std::enable_if_t<(sizeof(FromCharT) < sizeof(CharT))>* = nullptr>
     basic_pstring(const std::basic_string<FromCharT>& s)
     {
         const FromCharT *cs = s.c_str();
@@ -296,7 +296,7 @@ public:
     }
 
     // UTF-16 to UTF-8
-    template <typename FromCharT = T, std::enable_if_t<(sizeof(FromCharT) > sizeof(CharT))>* = nullptr>
+    template<typename FromCharT = T, std::enable_if_t<(sizeof(FromCharT) > sizeof(CharT))>* = nullptr>
     basic_pstring(const FromCharT *s)
     {
         const size_type nchars = static_cast<size_type>(
@@ -306,7 +306,7 @@ public:
     }
 
     // UTF-16 to UTF-8
-    template <typename FromCharT = T, std::enable_if_t<(sizeof(FromCharT) > sizeof(CharT))>* = nullptr>
+    template<typename FromCharT = T, std::enable_if_t<(sizeof(FromCharT) > sizeof(CharT))>* = nullptr>
     basic_pstring(const std::basic_string<FromCharT>& s)
     {
         const FromCharT *cs = s.c_str();
@@ -335,12 +335,12 @@ public:
     }
 
     // UTF-16 to UTF-8
-    template <typename ToCharT = T, std::enable_if_t<(sizeof(ToCharT) < sizeof(CharT))>* = nullptr>
+    template<typename ToCharT = T, std::enable_if_t<(sizeof(ToCharT) < sizeof(CharT))>* = nullptr>
     operator std::basic_string<ToCharT>() const
         { return boost::nowide::narrow(data(), size()); }
 
     // UTF-8 to UTF-16
-    template <typename ToCharT = T, std::enable_if_t<(sizeof(ToCharT) > sizeof(CharT))>* = nullptr>
+    template<typename ToCharT = T, std::enable_if_t<(sizeof(ToCharT) > sizeof(CharT))>* = nullptr>
     operator std::basic_string<ToCharT>() const
         { return boost::nowide::widen(data(), size()); }
 
@@ -380,7 +380,7 @@ public:
         return os << std::basic_string_view<CharT>{ &s.data_[1], n };
     }
 
-    template <typename ToCharT = T, std::enable_if_t<(sizeof(ToCharT) != sizeof(CharT))>* = nullptr>
+    template<typename ToCharT = T, std::enable_if_t<(sizeof(ToCharT) != sizeof(CharT))>* = nullptr>
     friend std::basic_ostream<ToCharT>& operator<<(std::basic_ostream<ToCharT>& os, const basic_pstring& s)
         { return os << std::basic_string<ToCharT>(s); }
 };

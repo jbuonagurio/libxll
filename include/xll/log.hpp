@@ -62,13 +62,13 @@ inline auto log() {
 
 namespace fmt {
 
-template <>
+template<>
 struct formatter<xll::XLRET>
 {
-    template <typename ParseContext>
+    template<typename ParseContext>
     constexpr auto parse(ParseContext &ctx) { return ctx.begin(); }
 
-    template <typename FormatContext>
+    template<typename FormatContext>
     auto format(xll::XLRET rc, FormatContext &ctx)
     {
         switch (rc) {
@@ -93,7 +93,7 @@ struct formatter<xll::XLRET>
 namespace xll {
 namespace sinks {
 
-template <typename Mutex>
+template<typename Mutex>
 class debug_sink : public spdlog::sinks::base_sink<Mutex>
 {
 public:

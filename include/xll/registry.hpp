@@ -29,10 +29,16 @@
 
 namespace xll {
 
+enum class macro_type : int
+{
+    function = 1,
+    command = 2
+};
+
 struct function_options
 {
     std::wstring argument_text;
-    int macro_type = 1;
+    macro_type type = macro_type::function;
     std::wstring category;
     std::wstring shortcut_text;
     std::wstring help_topic;
@@ -56,7 +62,7 @@ private:
 
 struct registry
 {
-    template <class F>
+    template<class F>
     static bool add(F ptr, double id)
     {
         std::lock_guard<std::mutex> lock(mutex_);
@@ -65,7 +71,7 @@ struct registry
         return true;
     }
 
-    template <class F>
+    template<class F>
     static bool remove(F ptr)
     {
         std::lock_guard<std::mutex> lock(mutex_);
@@ -91,7 +97,7 @@ private:
 //     9    pxFunctionHelp         xltypeStr    
 //    10    pxArgumentHelp[245]    xltypeStr    
 
-template <class F, class... Tags>
+template<class F, class... Tags>
 inline double register_function(F ptr, const std::wstring& dll_alias,
     const std::wstring& function_text, const function_options& opts = {},
     attribute_set<Tags...> = {})
@@ -107,7 +113,7 @@ inline double register_function(F ptr, const std::wstring& dll_alias,
     args[2].emplace<xlstr>(tt);
     args[3].emplace<xlstr>(function_text);
     args[4].emplace<xlstr>(opts.argument_text);
-    args[5].emplace<xlint>(opts.macro_type);
+    args[5].emplace<xlint>(static_cast<int>(opts.type));
     args[6].emplace<xlstr>(opts.category);
     args[7].emplace<xlstr>(opts.shortcut_text);
     args[8].emplace<xlstr>(opts.help_topic);
@@ -140,7 +146,7 @@ inline double register_function(F ptr, const std::wstring& dll_alias,
     return id;
 }
 
-template <class F>
+template<class F>
 inline bool unregister_function(F ptr)
 {
     return registry::remove(ptr);

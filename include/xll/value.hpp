@@ -144,7 +144,7 @@ struct xlbigdata
 
 namespace detail {
 
-template <class T, class Allocator = std::allocator<T>>
+template<class T, class Allocator = std::allocator<T>>
 struct xlmulti_base : detail::alloc_holder<Allocator>
 {
     using xltype = std::integral_constant<XLTYPE, xltypeMulti>;

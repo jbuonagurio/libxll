@@ -19,6 +19,10 @@
 #include <boost/config.hpp>
 #include <boost/predef.h>
 
+#ifndef XLL_EXPORT
+#define XLL_EXPORT extern "C" BOOST_SYMBOL_EXPORT
+#endif
+
 #if defined(NDEBUG) && !defined(XLL_DISABLE_ASSERTS)
 #define XLL_DISABLE_ASSERTS
 #endif

@@ -34,131 +34,131 @@
 namespace xll {
 namespace detail {
 
-template <typename T>
+template<typename T>
 struct is_array_type : std::false_type {};
 
-template <std::size_t N>
+template<std::size_t N>
 struct is_array_type<static_fp12<N> *> : std::true_type {};
 
 // Variable-type worksheet values and arrays (XLOPER12)
-template <class T, class U = void>
+template<class T, class U = void>
 struct type_text_arg {
     static_assert(!std::is_base_of_v<detail::variant_common_type, T>, "invalid operand type");
     static constexpr std::array<wchar_t, 1> value = { L'Q' };
 };
 
-template <class T>
+template<class T>
 struct type_text_arg<T, std::enable_if_t<std::is_same_v<T, variant *>>> {
     static constexpr std::array<wchar_t, 1> value = { L'Q' };
 };
 
 // Asynchronous call handle (XLOPER12, xlTypeBigData)
-template <class T>
+template<class T>
 struct type_text_arg<T, std::enable_if_t<std::is_same_v<T, handle *>>> {
     static constexpr std::array<wchar_t, 1> value = { L'X' };
 };
 
 // Larger grid floating-point array structure (FP12)
-template <class T>
+template<class T>
 struct type_text_arg<T, std::enable_if_t<is_array_type<T>::value>> {
     static constexpr std::array<wchar_t, 2> value = { L'K', L'%' };
 };
 
 // Asynchronous UDF return type
-template <class T>
+template<class T>
 struct type_text_arg<T, std::enable_if_t<std::is_same_v<T, void>>> {
     static constexpr std::array<wchar_t, 1> value = { L'>' };
 };
 
 // Integral types
-template <class T>
+template<class T>
 struct type_text_arg<T, std::enable_if_t<std::is_same_v<T, bool>>> {
     static constexpr std::array<wchar_t, 1> value = { L'A' };
 };
 
-template <class T>
+template<class T>
 struct type_text_arg<T, std::enable_if_t<std::is_same_v<T, bool *>>> {
     static constexpr std::array<wchar_t, 1> value = { L'L' };
 };
 
-template <class T>
+template<class T>
 struct type_text_arg<T, std::enable_if_t<std::is_same_v<T, uint16_t>>> {
     static constexpr std::array<wchar_t, 1> value = { L'H' };
 };
 
-template <class T>
+template<class T>
 struct type_text_arg<T, std::enable_if_t<std::is_same_v<T, int16_t>>> {
     static constexpr std::array<wchar_t, 1> value = { L'I' };
 };
 
-template <class T>
+template<class T>
 struct type_text_arg<T, std::enable_if_t<std::is_same_v<T, int16_t *>>> {
     static constexpr std::array<wchar_t, 1> value = { L'M' };
 };
 
-template <class T>
+template<class T>
 struct type_text_arg<T, std::enable_if_t<std::is_same_v<T, int32_t>>> {
     static constexpr std::array<wchar_t, 1> value = { L'J' };
 };
 
-template <class T>
+template<class T>
 struct type_text_arg<T, std::enable_if_t<std::is_same_v<T, int32_t *>>> {
     static constexpr std::array<wchar_t, 1> value = { L'N' };
 };
 
 // Floating-point types
-template <class T>
+template<class T>
 struct type_text_arg<T, std::enable_if_t<std::is_same_v<T, double>>> {
     static constexpr std::array<wchar_t, 1> value = { L'B' };
 };
 
-template <class T>
+template<class T>
 struct type_text_arg<T, std::enable_if_t<std::is_same_v<T, double *>>> {
     static constexpr std::array<wchar_t, 1> value = { L'E' };
 };
 
 // Null-terminated ASCII byte string (max. 256 characters)
-template <class T>
+template<class T>
 struct type_text_arg<T, std::enable_if_t<std::is_same_v<T, char *>>> {
     static constexpr std::array<wchar_t, 1> value = { L'C' };
 };
 
-template <class T>
+template<class T>
 struct type_text_arg<T, std::enable_if_t<std::is_same_v<T, const char *>>> {
     static constexpr std::array<wchar_t, 1> value = { L'C' };
 };
 
 // Null-terminated Unicode wide-character string (max. 32767 characters)
-template <class T>
+template<class T>
 struct type_text_arg<T, std::enable_if_t<std::is_same_v<T, wchar_t *>>> {
     static constexpr std::array<wchar_t, 2> value = { L'C', L'%' };
 };
 
-template <class T>
+template<class T>
 struct type_text_arg<T, std::enable_if_t<std::is_same_v<T, const wchar_t *>>> {
     static constexpr std::array<wchar_t, 2> value = { L'C', L'%' };
 };
 
-template <class A>
+template<class A>
 struct attribute_text_arg;
 
 // Function attributes
-template <>
+template<>
 struct attribute_text_arg<tag::cluster_safe> {
     static constexpr std::array<wchar_t, 1> value = { L'&' };
 };
 
-template <>
+template<>
 struct attribute_text_arg<tag::volatile_> {
     static constexpr std::array<wchar_t, 1> value = { L'!' };
 };
 
-template <>
+template<>
 struct attribute_text_arg<tag::thread_safe> {
     static constexpr std::array<wchar_t, 1> value = { L'$' };
 };
 
-template <>
+template<>
 struct attribute_text_arg<tag::macro_sheet_equivalent> {
     static constexpr std::array<wchar_t, 1> value = { L'#' };
 };

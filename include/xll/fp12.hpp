@@ -37,10 +37,10 @@ struct fp12
 /// A::size_type size2_;
 /// A data_;
 
-template <std::size_t N>
+template<std::size_t N>
 using static_fp12_storage = detail::static_array<double, N, int32_t>;
 
-template <std::size_t N = 1>
+template<std::size_t N = 1>
 using static_fp12 = boost::numeric::ublas::matrix<double,
     boost::numeric::ublas::row_major,
     static_fp12_storage<N>>;

@@ -52,7 +52,7 @@ BOOST_FORCEINLINE std::uintptr_t stack_limit()
 #endif // BOOST_OS_WINDOWS
 
 // Used for empty base optimization.
-template <class Allocator>
+template<class Allocator>
 struct alloc_holder : private Allocator
 {
     using ebo_eligible = std::conjunction<

@@ -53,7 +53,7 @@ inline int get_hwnd()
 
 /// Converts one type of XLOPER to another, if possible.
 /// \sa https://docs.microsoft.com/en-us/office/client-developer/excel/xlcoerce
-template <XLTYPE... Ts>
+template<XLTYPE... Ts>
 inline variant coerce(variant& source)
 {
     constexpr int flags = (Ts | ...);

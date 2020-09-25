@@ -31,7 +31,7 @@ namespace xll {
  * \return Entry point return code (xlret prefix).
  */
 
-template <class R, class V, std::size_t N>
+template<class R, class V, std::size_t N>
 inline int Excel12v(int xlfn, R *result, std::array<V*, N>& opers, std::size_t count = N)
 {
     static_assert(N <= 255, "parameter count exceeds Excel 12 limit");
@@ -60,14 +60,14 @@ inline int Excel12v(int xlfn, R *result, std::array<V*, N>& opers, std::size_t c
     return rc;
 }
 
-template <class R>
+template<class R>
 inline int Excel12(int xlfn, R *result)
 {
     std::array<R*, 1> opers{ nullptr };
     return Excel12v(xlfn, result, opers);
 }
 
-template <class R, class... Args>
+template<class R, class... Args>
 inline int Excel12(int xlfn, R *result, Args*... args)
 {
     std::array<detail::variant_common_type *, sizeof...(Args)> opers =
@@ -75,7 +75,7 @@ inline int Excel12(int xlfn, R *result, Args*... args)
     return Excel12v(xlfn, result, opers);
 }
 
-template <class... Args>
+template<class... Args>
 inline int Excel12(int xlfn, std::nullptr_t, Args*... args)
 {
     std::array<detail::variant_common_type *, sizeof...(Args)> opers =

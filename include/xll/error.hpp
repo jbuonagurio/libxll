@@ -41,7 +41,7 @@ static const std::error_category& excel_category = get_excel_category();
 
 namespace std {
 
-template <>
+template<>
 struct is_error_code_enum<xll::error::excel_error> : public true_type {};
 
 } // namespace std

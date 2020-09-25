@@ -16,17 +16,17 @@ namespace detail {
 
 // SFINAE-friendly version of std::underlying_type.
 
-template <class T, bool = std::is_enum_v<T>>
+template<class T, bool = std::is_enum_v<T>>
 struct safe_underlying_type {
     using type = typename std::underlying_type<T>::type;
 };
 
-template <class T>
+template<class T>
 struct safe_underlying_type<T, false> {
     using type = T;
 };
 
-template <class T>
+template<class T>
 using safe_underlying_type_t = typename safe_underlying_type<T>::type;
 
 // Returns a decayed type for extern "C" linkage. Applies enumeration to
@@ -37,7 +37,7 @@ using safe_underlying_type_t = typename safe_underlying_type<T>::type;
 // While technically implementation-defined, this assumes that references are
 // implemented using a pointer variable.
 
-template <class T>
+template<class T>
 struct extern_c_type {
 private:
   using U =
@@ -55,7 +55,7 @@ public:
     >;
 };
 
-template <class T>
+template<class T>
 using extern_c_type_t = typename extern_c_type<T>::type;
 
 } // namespace detail

@@ -22,6 +22,20 @@
 #include <boost/mp11/algorithm.hpp>
 
 namespace xll {
+
+struct xlnum;
+struct xlstr;
+struct xlbool;
+struct xlerr;
+struct xlint;
+struct xlsref;
+struct xlref;
+struct xlmissing;
+struct xlnil;
+struct xlflow;
+struct xlbigdata;
+struct xlmulti;
+
 namespace detail {
 
 namespace mp11 = boost::mp11;
@@ -29,7 +43,7 @@ namespace mp11 = boost::mp11;
 // Overload resolution based on P0608R3: "A sane variant converting constructor"
 // https://wg21.link/p0608
 
-template <class T> using remove_cvref_t = std::remove_cv_t<std::remove_reference_t<T>>;
+template<class T> using remove_cvref_t = std::remove_cv_t<std::remove_reference_t<T>>;
 
 struct narrowing_check_impl
 {
@@ -106,61 +120,61 @@ template<class U, class... T> using resolve_overload_index = mp11::mp_find<mp11:
 // | alignof(decltype(XLOPER12::val)) |     8 |     8 |
 // +==================================+=======+=======+
 
-template <class... T> union variant_storage_impl;
+template<class... T> union variant_storage_impl;
 
-template <class... T> using variant_storage = variant_storage_impl<T...>;
+template<class... T> using variant_storage = variant_storage_impl<T...>;
 
 template<> union variant_storage_impl<> {};
 
-template <class T1, class... T> union variant_storage_impl<T1, T...>
+template<class T1, class... T> union variant_storage_impl<T1, T...>
 {
     T1 first_;
     variant_storage<T...> rest_;
     unsigned char padding_[24];
 
-    template <class... Args>
+    template<class... Args>
     constexpr explicit variant_storage_impl(mp11::mp_size_t<0>, Args&&... args)
         : first_(std::forward<Args>(args)...) {}
 
-    template <std::size_t I, class... Args>
+    template<std::size_t I, class... Args>
     constexpr explicit variant_storage_impl(mp11::mp_size_t<I>, Args&&... args)
         : rest_(mp11::mp_size_t<I-1>(), std::forward<Args>(args)...) {}
 
     ~variant_storage_impl() {}
 
-    template <class... Args>
+    template<class... Args>
     void emplace(mp11::mp_size_t<0>, Args&&... args)
         { ::new(&first_) T1(std::forward<Args>(args)...); }
 
-    template <std::size_t I, class... Args>
+    template<std::size_t I, class... Args>
     void emplace(mp11::mp_size_t<I>, Args&&... args)
         { rest_.emplace(mp11::mp_size_t<I-1>(), std::forward<Args>(args)...); }
 
     constexpr T1& get(mp11::mp_size_t<0>) noexcept { return first_; }
     constexpr const T1& get(mp11::mp_size_t<0>) const noexcept { return first_; }
 
-    template <std::size_t I>
+    template<std::size_t I>
     constexpr mp11::mp_at_c<mp11::mp_list<T...>, I-1>& get(mp11::mp_size_t<I>) noexcept
         { return rest_.get(mp11::mp_size_t<I-1>()); }
 
-    template <std::size_t I>
+    template<std::size_t I>
     constexpr const mp11::mp_at_c<mp11::mp_list<T...>, I-1>& get(mp11::mp_size_t<I>) const noexcept
         { return rest_.get(mp11::mp_size_t<I-1>()); }
 };
 
 } // namespace detail
 
-template <class T> struct in_place_type_t {};
-template <class T> constexpr in_place_type_t<T> in_place_type{};
+template<class T> struct in_place_type_t {};
+template<class T> constexpr in_place_type_t<T> in_place_type{};
 
 namespace detail {
 
-template <class T> struct is_in_place_type: std::false_type {};
-template <class T> struct is_in_place_type<in_place_type_t<T>>: std::true_type {};
+template<class T> struct is_in_place_type: std::false_type {};
+template<class T> struct is_in_place_type<in_place_type_t<T>>: std::true_type {};
 
 struct variant_common_type {};
 
-template <class... Ts>
+template<class... Ts>
 struct variant_base_impl : variant_common_type
 {
 protected:
@@ -170,32 +184,10 @@ protected:
     // XLOPER12-compatible aligned storage must be 24 bytes.
     static_assert(sizeof(st_) == 24U, "invalid sizeof(variant_storage<Ts...>)");
 
-    struct copy_construct_impl
-    {
-        variant_base_impl *self_;
-        const variant_base_impl& other_;
-        template <class I> constexpr void operator()(I)
-        {
-            ::new(&self_->st_) variant_storage<Ts...>(I(), other_.st_.get(I()));
-            self_->xltype_ = other_.xltype_;
-        }
-    };
-
-    struct move_construct_impl
-    {
-        variant_base_impl *self_;
-        variant_base_impl& other_;
-        template <class I> constexpr void operator()(I) noexcept
-        {
-            ::new(&self_->st_) variant_storage<Ts...>(I(), std::move(other_.st_.get(I())));
-            self_->xltype_ = std::exchange(other_.xltype_, XLTYPE::xltypeMissing);
-        }
-    };
-
     struct destroy_impl
     {
         variant_base_impl *self_;
-        template <class I> void operator()(I) const noexcept
+        template<class I> void operator()(I) const noexcept
         {
             using T = mp11::mp_at<mp11::mp_list<Ts...>, I>;
             switch (T::xltype::value) {
@@ -219,7 +211,7 @@ protected:
     constexpr std::size_t index_impl(mp11::mp_list<>, uint32_t) const noexcept
         { return 0; }
 
-    template <class U1, class... U>
+    template<class U1, class... U>
     constexpr std::size_t index_impl(mp11::mp_list<U1, U...>, uint32_t xltype) const noexcept
         { return (xltype == U1::xltype::value) ? 0 : index_impl(mp11::mp_list<U...>(), xltype) + 1; }
 
@@ -227,7 +219,7 @@ protected:
         { return index_impl(mp11::mp_list<Ts...>(), xltype); }
 
     // Constructs value directly in storage. Variant must be empty.
-    template <class U, class... Args> void replace(Args&&... args)
+    template<class U, class... Args> void replace(Args&&... args)
     {
         static_assert(mp11::mp_contains<mp11::mp_list<Ts...>, U>::value, "invalid variant alternative type");
         ::new(&st_) variant_storage<Ts...>(mp11::mp_find<mp11::mp_list<Ts...>, U>(), std::forward<Args>(args)...);
@@ -239,7 +231,7 @@ public:
         : st_(mp11::mp_find<mp11::mp_list<Ts...>, xlmissing>()), xltype_(XLTYPE::xltypeMissing) {}
 
     // Constructs the variant with the alternative U.
-    template <class U, class... Args>
+    template<class U, class... Args>
     constexpr explicit variant_base_impl(in_place_type_t<U>, Args&&... args)
         : st_(mp11::mp_find<mp11::mp_list<Ts...>, U>(), std::forward<Args>(args)...), xltype_(U::xltype::value) {}
 
@@ -257,7 +249,7 @@ public:
         { return index_impl(mp11::mp_list<Ts...>(), xltype()); }
     
     // Construct value in-place.
-    template <class U, class... Args> void emplace(Args&&... args)
+    template<class U, class... Args> void emplace(Args&&... args)
     {
         static_assert(mp11::mp_contains<mp11::mp_list<Ts...>, U>::value, "invalid variant alternative type");
         U temp(std::forward<Args>(args)...);
@@ -266,28 +258,28 @@ public:
         xltype_ = U::xltype::value;
     }
 
-    template <class U> constexpr U& get() noexcept
+    template<class U> constexpr U& get() noexcept
     {
         static_assert(mp11::mp_contains<mp11::mp_list<Ts...>, U>::value, "invalid variant alternative type");
         XLL_ASSERT(xltype() == U::xltype::value);
         return st_.get(mp11::mp_find<mp11::mp_list<Ts...>, U>());
     }
 
-    template <class U> constexpr const U& get() const noexcept
+    template<class U> constexpr const U& get() const noexcept
     {
         static_assert(mp11::mp_contains<mp11::mp_list<Ts...>, U>::value, "invalid variant alternative type");
-        //XLL_ASSERT(xltype() == U::xltype::value);
+        XLL_ASSERT(xltype() == U::xltype::value);
         return st_.get(mp11::mp_find<mp11::mp_list<Ts...>, U>());
     }
 
     // Extensions for variant containing a single type.
-    template <class L = mp11::mp_list<Ts...>,
+    template<class L = mp11::mp_list<Ts...>,
         class E = std::enable_if_t<std::is_same_v<mp11::mp_size<L>, mp11::mp_size_t<1>>>,
         class U = boost::mp11::mp_front<L>>
     constexpr U& value() noexcept
         { return st_.get(mp11::mp_find<L, U>()); }
 
-    template <class L = mp11::mp_list<Ts...>,
+    template<class L = mp11::mp_list<Ts...>,
         class E = std::enable_if_t<std::is_same_v<mp11::mp_size<L>, mp11::mp_size_t<1>>>,
         class U = boost::mp11::mp_front<L>>
     constexpr const U& value() const noexcept
@@ -308,9 +300,33 @@ public:
         { xltype_ &= ~(flags & 0xF000); }
 };
 
-template <class... Ts>
+template<class... Ts>
 struct variant_base : variant_base_impl<Ts...>
 {
+private:
+    struct copy_construct_impl
+    {
+        variant_base *self_;
+        const variant_base& other_;
+        template<class I> constexpr void operator()(I)
+        {
+            ::new(&self_->st_) variant_storage<Ts...>(I(), other_.st_.get(I()));
+            self_->xltype_ = other_.xltype_;
+        }
+    };
+
+    struct move_construct_impl
+    {
+        variant_base *self_;
+        variant_base& other_;
+        template<class I> constexpr void operator()(I) noexcept
+        {
+            ::new(&self_->st_) variant_storage<Ts...>(I(), std::move(other_.st_.get(I())));
+            self_->xltype_ = std::exchange(other_.xltype_, XLTYPE::xltypeMissing);
+        }
+    };
+
+public:
     using variant_base_impl = variant_base_impl<Ts...>;
 
     variant_base() = default;
@@ -336,7 +352,7 @@ struct variant_base : variant_base_impl<Ts...>
     }
 
     // Converting move constructor for stored value types.
-    template <class U,
+    template<class U,
         class Ud = std::decay_t<U>,
         class E1 = std::enable_if_t<!std::is_same_v<Ud, variant_base> && !is_in_place_type<Ud>::value>,
         class V = resolve_overload_type<U&&, Ts...>,
@@ -352,7 +368,7 @@ struct variant_base : variant_base_impl<Ts...>
         class E2 = std::enable_if_t<std::is_assignable_v<V&, U&&> && std::is_constructible_v<V, U&&>>>
     constexpr variant_base& operator=(U&& rhs) noexcept(std::is_nothrow_constructible_v<V, U&&>)
     {
-        emplace<V>(std::forward<U>(rhs));
+        variant_base_impl::template emplace<V>(std::forward<U>(rhs));
         return *this;
     }
 };

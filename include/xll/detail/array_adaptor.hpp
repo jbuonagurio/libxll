@@ -27,7 +27,7 @@ namespace detail {
 // Boost.uBLAS Storage concept using a fixed size buffer and configurable
 // stored size type (SST). Used with FP12 arrays.
 
-template <class T, std::size_t N, class SST = std::size_t>
+template<class T, std::size_t N, class SST = std::size_t>
 struct static_array
     : public boost::numeric::ublas::storage_array<static_array<T, N, SST>>
 {
