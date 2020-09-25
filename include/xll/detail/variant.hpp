@@ -168,7 +168,7 @@ protected:
     uint32_t xltype_; // DWORD
 
     // XLOPER12-compatible aligned storage must be 24 bytes.
-    static_assert(sizeof(st_) == 24U, "invalid variant size");
+    static_assert(sizeof(st_) == 24U, "invalid sizeof(variant_storage<Ts...>)");
 
     struct copy_construct_impl
     {
@@ -203,7 +203,7 @@ protected:
             case XLTYPE::xltypeRef:
             case XLTYPE::xltypeMulti:
                 if (self_->flags() & xlbitXLFree) {
-                    //Excel12(xlFree, nullptr, self_); // Excel allocated memory
+                    Excel12(xlFree, nullptr, self_); // Excel allocated memory
                 }
                 else {
                     self_->st_.get(I()).~T();
@@ -236,12 +236,12 @@ protected:
 
 public:
     constexpr variant_base_impl() noexcept
-        : xltype_(XLTYPE::xltypeMissing), st_(mp11::mp_find<mp11::mp_list<Ts...>, xlmissing>()) {}
+        : st_(mp11::mp_find<mp11::mp_list<Ts...>, xlmissing>()), xltype_(XLTYPE::xltypeMissing) {}
 
     // Constructs the variant with the alternative U.
     template <class U, class... Args>
     constexpr explicit variant_base_impl(in_place_type_t<U>, Args&&... args)
-        : xltype_(U::xltype::value), st_(mp11::mp_find<mp11::mp_list<Ts...>, U>(), std::forward<Args>(args)...) {}
+        : st_(mp11::mp_find<mp11::mp_list<Ts...>, U>(), std::forward<Args>(args)...), xltype_(U::xltype::value) {}
 
     void destroy() noexcept
         { boost::mp11::mp_with_index<sizeof...(Ts)>(index(), destroy_impl{this}); }

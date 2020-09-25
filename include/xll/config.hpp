@@ -7,7 +7,7 @@
 
 #pragma once
 
-// Dependencies:
+// Main Dependencies:
 // - Boost.Assert
 // - Boost.Config
 // - Boost.MP11
@@ -18,3 +18,17 @@
 
 #include <boost/config.hpp>
 #include <boost/predef.h>
+
+#if defined(NDEBUG) && !defined(XLL_DISABLE_ASSERTS)
+#define XLL_DISABLE_ASSERTS
+#endif
+
+// Enable OutputDebugStringA logging using spdlog.
+//#ifndef XLL_USE_SPDLOG
+//#define XLL_USE_SPDLOG
+//#endif
+
+// Custom entry point may be used for an HPC cluster container DLL.
+#ifndef EXCEL12ENTRYPT
+#define EXCEL12ENTRYPT "MdCallBack12"
+#endif

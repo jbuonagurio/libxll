@@ -13,6 +13,34 @@
  */
 
 #include <xll/config.hpp>
+
+#ifndef XLL_USE_SPDLOG
+
+#include <string_view>
+
+namespace xll {
+namespace detail {
+
+struct log_impl {
+    template<class... Args> static void trace(std::string_view fmt, const Args&... args) {}
+    template<class... Args> static void debug(std::string_view fmt, const Args&... args) {}
+    template<class... Args> static void info(std::string_view fmt, const Args&... args) {}
+    template<class... Args> static void warn(std::string_view fmt, const Args&... args) {}
+    template<class... Args> static void error(std::string_view fmt, const Args&... args) {}
+    template<class... Args> static void critical(std::string_view fmt, const Args&... args) {}
+};
+
+} // namespace detail
+
+inline auto log() {
+    static auto logger = std::make_shared<detail::log_impl>();
+    return logger;
+}
+
+} // namespace xll
+
+#else
+
 #include <xll/constants.hpp>
 
 #if BOOST_OS_WINDOWS
@@ -55,7 +83,7 @@ struct formatter<xll::XLRET>
         case xll::XLRET::xlretNotThreadSafe:           return format_to(ctx.out(), "xlretNotThreadSafe");
         case xll::XLRET::xlretInvAsynchronousContext:  return format_to(ctx.out(), "xlretInvAsynchronousContext");
         case xll::XLRET::xlretNotClusterSafe:          return format_to(ctx.out(), "xlretNotClusterSafe");
-        default:                                       return format_to(ctx.out(), "xlretUnknown");
+        default:                                       return format_to(ctx.out(), static_cast<int>(rc));
         }
     }
 };
@@ -77,7 +105,6 @@ protected:
         spdlog::memory_buf_t formatted;
         base_sink<Mutex>::formatter_->format(msg, formatted);
 #if BOOST_OS_WINDOWS
-        //std::clog << fmt::to_string(formatted);
         boost::winapi::OutputDebugStringA(fmt::to_string(formatted).c_str());
 #else
         std::clog << fmt::to_string(formatted);
@@ -128,3 +155,4 @@ inline auto log()
 
 } // namespace xll
 
+#endif // XLL_USE_SPDLOG

@@ -17,7 +17,7 @@
 
 #include <boost/current_function.hpp>
 
-#if defined(XLL_DISABLE_ASSERTS) || defined(NDEBUG)
+#ifdef XLL_DISABLE_ASSERTS
 
 #define XLL_ASSERT(expr) ((void)0)
 
@@ -46,4 +46,4 @@ inline void assertion_failed(const char *expr, [[maybe_unused]] const char *func
 
 #define XLL_ASSERT(expr) (BOOST_LIKELY(!!(expr)) ?((void)0): xll::assertion_failed(#expr, BOOST_CURRENT_FUNCTION, __FILE__, __LINE__))
 
-#endif // defined(XLL_DISABLE_ASSERTS) || defined(NDEBUG)
+#endif // XLL_DISABLE_ASSERTS
