@@ -32,7 +32,10 @@ struct xlnum
 {
     using xltype = std::integral_constant<XLTYPE, xltypeNum>;
     xlnum() = default;
-    xlnum(double x) : num(x) {}
+    
+    // SFINAE is required for overload resolution in clang.
+    template<class T, class E = std::enable_if_t<std::is_floating_point_v<T>>>
+    xlnum(T x) : num(x) {}
 
     operator double() const noexcept
         { return num; }
@@ -77,7 +80,10 @@ struct xlint
 {
     using xltype = std::integral_constant<XLTYPE, xltypeInt>;
     xlint() = default;
-    xlint(int32_t i) : w(i) {}
+
+    // SFINAE is required for overload resolution in clang.
+    template<class T, class E = std::enable_if_t<std::is_integral_v<T> || (std::is_enum_v<T> && !std::is_same_v<T, error::excel_error>)>>
+    xlint(T i) : w(i) {}
     
     operator int32_t() const noexcept
         { return w; }
@@ -144,7 +150,7 @@ struct xlbigdata
 
 namespace detail {
 
-template<class T, class Allocator = std::allocator<T>>
+template <class T, class Allocator = std::allocator<T>>
 struct xlmulti_base : detail::alloc_holder<Allocator>
 {
     using xltype = std::integral_constant<XLTYPE, xltypeMulti>;
