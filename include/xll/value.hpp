@@ -18,9 +18,11 @@
 #include <boost/core/alloc_construct.hpp>
 
 #include <algorithm>
+#include <initializer_list>
 #include <iterator>
 #include <functional>
 #include <stdexcept>
+#include <vector>
 
 namespace xll {
 
@@ -162,9 +164,11 @@ struct xlmulti_base : detail::alloc_holder<Allocator>
     using const_iterator = const_pointer;
     using const_reverse_iterator = std::reverse_iterator<const_iterator>;
     
+    // Storage layout is compatible with Eigen: Eigen/src/Core/DenseStorage.h
+
     pointer lparray = nullptr;
-    int32_t rows = 0; // INT32
-    int32_t columns = 0; // INT32
+    int32_t rows_ = 0; // INT32
+    int32_t cols_ = 0; // INT32
 };
 
 } // namespace detail
@@ -184,44 +188,77 @@ struct xlmulti : detail::xlmulti_base<
         xlmissing,
         xlnil>>
 {
-    xlmulti(unsigned i, unsigned j)
-    {
-        if (i == 0 || j == 0)
-            return;
-        
-        std::size_t n = i * j;
+    xlmulti(unsigned rows, unsigned cols)
+    {   
+        std::size_t n = rows * cols;
+        if (rows != 0 && n / rows != cols)
+            throw std::length_error("xlmulti too long");
+
         lparray = alloc().allocate(n);
         std::uninitialized_fill_n(lparray, n, xlnil());
-        rows = i;
-        columns = j;
+        rows_ = static_cast<int32_t>(rows);
+        cols_ = static_cast<int32_t>(cols);
     }
 
     xlmulti(const xlmulti& other)
     {
-        std::size_t n = other.rows * other.columns;
+        std::size_t n = static_cast<std::size_t>(other.rows_ * other.cols_);
         lparray = alloc().allocate(n);
         std::uninitialized_copy_n(other.lparray, n, lparray);
-        rows = other.rows;
-        columns = other.columns;
+        rows_ = other.rows_;
+        cols_ = other.cols_;
     }
 
     xlmulti(xlmulti&& other) noexcept
     {
         if (this != &other) {
             lparray = std::exchange(other.lparray, nullptr);
-            rows = std::exchange(other.rows, 0);
-            columns = std::exchange(other.columns, 0);
+            rows_ = std::exchange(other.rows_, 0);
+            cols_ = std::exchange(other.cols_, 0);
+        }
+    }
+
+    xlmulti(std::initializer_list<std::initializer_list<value_type>> list)
+    {
+        rows_ = static_cast<int32_t>(list.size());
+        cols_ = 0;
+
+        for (const auto& row : list) {
+            if (row.size() > static_cast<std::size_t>(cols_)) {
+                cols_ = static_cast<int32_t>(row.size());
+            }
+        }
+
+        std::size_t n = static_cast<std::size_t>(rows_ * cols_);
+        lparray = alloc().allocate(n);
+        auto it = list.begin();
+        pointer current = lparray;
+
+        for (const auto& row : list) {
+            current = std::uninitialized_copy(row.begin(), row.end(), current);
+            auto cols = row.size();
+            if (cols < static_cast<std::size_t>(cols_)) {
+                current = std::uninitialized_fill_n(current, cols_ - cols, xlnil());
+            }
+        }
+    }
+
+    ~xlmulti() noexcept
+    {
+        if (lparray) {
+            std::destroy_n(lparray, size());
+            alloc().deallocate(lparray, size());
         }
     }
 
     xlmulti& operator=(const xlmulti& other)
     {
         this->~xlmulti();
-        std::size_t n = other.rows * other.columns;
+        std::size_t n = static_cast<std::size_t>(other.rows_ * other.cols_);
         lparray = alloc().allocate(n);
         std::uninitialized_copy_n(other.lparray, n, lparray);
-        rows = other.rows;
-        columns = other.columns;
+        rows_ = other.rows_;
+        cols_ = other.cols_;
         return *this;
     }
 
@@ -230,16 +267,10 @@ struct xlmulti : detail::xlmulti_base<
         if (this != &other) {
             this->~xlmulti();
             lparray = std::exchange(other.lparray, nullptr);
-            rows = std::exchange(other.rows, 0);
-            columns = std::exchange(other.columns, 0);
+            rows_ = std::exchange(other.rows_, 0);
+            cols_ = std::exchange(other.cols_, 0);
         }
         return *this;
-    }
-
-    ~xlmulti() noexcept
-    {
-        std::destroy_n(lparray, size());
-        alloc().deallocate(lparray, size());
     }
     
     inline bool empty() const noexcept {
@@ -251,16 +282,16 @@ struct xlmulti : detail::xlmulti_base<
     }
 
     inline std::size_t size() const noexcept {
-        return static_cast<std::size_t>(rows * columns);
+        return static_cast<std::size_t>(rows_ * cols_);
     }
 
     inline reference operator[](std::size_t n) noexcept {
-        return *std::next(lparray, n);
+        return *std::next(lparray, static_cast<std::ptrdiff_t>(n));
     }
 
     inline reference operator()(unsigned i, unsigned j) noexcept {
-        auto n = static_cast<std::size_t>(i * columns + j);
-        return *std::next(lparray, n);
+        auto n = static_cast<std::size_t>(i * cols_ + j);
+        return *std::next(lparray, static_cast<std::ptrdiff_t>(n));
     }
 
     inline reference at(std::size_t n) {
@@ -270,7 +301,7 @@ struct xlmulti : detail::xlmulti_base<
     }
 
     inline reference at(unsigned i, unsigned j) {
-        auto n = static_cast<std::size_t>(i * columns + j);
+        auto n = static_cast<std::size_t>(i * cols_ + j);
         if (n > size())
             throw std::out_of_range("invalid xlmulti subscript");
         return operator()(i, j);
@@ -283,16 +314,16 @@ struct xlmulti : detail::xlmulti_base<
         { return lparray; }
 
     inline const_iterator end() const noexcept
-        { return std::next(lparray, size()); }
+        { return std::next(lparray, static_cast<std::ptrdiff_t>(size())); }
     
     inline const_iterator cend() const noexcept
-        { return std::next(lparray, size()); }
+        { return std::next(lparray, static_cast<std::ptrdiff_t>(size())); }
 
     inline iterator begin() noexcept
         { return lparray; }
     
     inline iterator end() noexcept
-        { return std::next(lparray, size()); }
+        { return std::next(lparray, static_cast<std::ptrdiff_t>(size())); }
 
     inline const_reverse_iterator rbegin() const noexcept
         { return const_reverse_iterator(end()); }

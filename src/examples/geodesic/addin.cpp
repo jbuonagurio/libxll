@@ -72,7 +72,7 @@ XLL_EXPORT xll::static_fp12<2> * __stdcall geodesicInverse(
 }
 
 /// Returns the GeographicLib version.
-XLL_EXPORT const char * __stdcall libraryVersion(xll::variant12 *)
+XLL_EXPORT const char * __stdcall libraryVersion(xll::variant *)
 {
     const char *version = "GeographicLib " GEOGRAPHICLIB_VERSION_STRING;
     return version;
@@ -82,12 +82,12 @@ XLL_EXPORT const char * __stdcall libraryVersion(xll::variant12 *)
 /// add-in. If xAction = 1, this function should return a string containing the
 /// long name of this XLL. If xAction = 2 or 3, this function should return
 /// xlerrValue (#VALUE!).
-XLL_EXPORT xll::variant12 * __stdcall xlAddInManagerInfo12(xll::variant12 *xAction)
+XLL_EXPORT xll::variant * __stdcall xlAddInManagerInfo12(xll::variant *xAction)
 {
     using namespace xll;
 	
-    thread_local variant12 xInfo, xIntAction;
-    xloper12<tag::xlint> xDestType(xltypeInt);
+    thread_local variant xInfo, xIntAction;
+    xloper<tag::xlint> xDestType(xltypeInt);
 
 	Excel12(xlCoerce, &xIntAction, xAction, &xDestType);
     
@@ -159,7 +159,7 @@ XLL_EXPORT int __stdcall xlAutoRemove()
 }
 
 /// Free internally allocated arrays and call destructor.
-XLL_EXPORT int __stdcall xlAutoFree12(xll::variant12 *pxFree)
+XLL_EXPORT int __stdcall xlAutoFree12(xll::variant *pxFree)
 {
     pxFree->release();
     return 1;
