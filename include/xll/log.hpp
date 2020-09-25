@@ -22,12 +22,12 @@ namespace xll {
 namespace detail {
 
 struct log_impl {
-    template<class... Args> static void trace(std::string_view fmt, const Args&... args) {}
-    template<class... Args> static void debug(std::string_view fmt, const Args&... args) {}
-    template<class... Args> static void info(std::string_view fmt, const Args&... args) {}
-    template<class... Args> static void warn(std::string_view fmt, const Args&... args) {}
-    template<class... Args> static void error(std::string_view fmt, const Args&... args) {}
-    template<class... Args> static void critical(std::string_view fmt, const Args&... args) {}
+    template<class... Args> static void trace(std::string_view, const Args&...) {}
+    template<class... Args> static void debug(std::string_view, const Args&...) {}
+    template<class... Args> static void info(std::string_view, const Args&...) {}
+    template<class... Args> static void warn(std::string_view, const Args&...) {}
+    template<class... Args> static void error(std::string_view, const Args&...) {}
+    template<class... Args> static void critical(std::string_view, const Args&...) {}
 };
 
 } // namespace detail
