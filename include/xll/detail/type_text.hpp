@@ -231,11 +231,15 @@ constexpr auto type_text_impl(attribute_set<Tags...>)
 // Overloads for various calling conventions and attributes.
 
 template<class F, class... Args, class... Tags>
-constexpr auto type_text(F(__cdecl *)(Args...), attribute_set<Tags...> attrs)
+constexpr auto type_text(F (__cdecl *)(Args...), attribute_set<Tags...> attrs)
 {
     using result_t = std::invoke_result_t<F(Args...), Args...>;
     return detail::type_text_impl<result_t, Args...>(attrs);
 }
+
+// Clang sees these as redefinitions.
+
+#ifndef __clang__
 
 template<class F, class... Args, class... Tags>
 constexpr auto type_text(F (__stdcall *)(Args...), attribute_set<Tags...> attrs)
@@ -257,6 +261,8 @@ constexpr auto type_text(F (__vectorcall *)(Args...), attribute_set<Tags...> att
     using result_t = std::invoke_result_t<F(Args...), Args...>;
     return detail::type_text_impl<result_t, Args...>(attrs);
 }
+
+#endif // __clang__
 
 } // namespace detail
 } // namespace xll
