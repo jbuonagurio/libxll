@@ -61,8 +61,8 @@ int main()
 
     BOOST_TEST_TRAIT_TRUE((std::is_same<detail::resolve_overload_type<const wchar_t *, xlbool, xlstr>, xlstr>));
     BOOST_TEST_TRAIT_TRUE((std::is_same<detail::resolve_overload_type<const char *, xlbool, xlstr>, xlstr>));
+    BOOST_TEST_TRAIT_TRUE((std::is_same<detail::resolve_overload_type<xlstr, xlstr, xlbool, xlint>, xlstr>));
     BOOST_TEST_TRAIT_TRUE((std::is_same<detail::resolve_overload_type<xlbool, xlstr, xlbool, xlint>, xlbool>));
-    BOOST_TEST_TRAIT_TRUE((std::is_same<detail::resolve_overload_type<xlstr, xlstr, xlbool>, xlstr>));
     BOOST_TEST_TRAIT_TRUE((std::is_same<detail::resolve_overload_type<int, xlnum, xlint, xlbool, xlerr, xlmulti>, xlint>));
     BOOST_TEST_TRAIT_TRUE((std::is_same<detail::resolve_overload_type<double, xlnum, xlint, xlbool, xlerr, xlmulti>, xlnum>));
     BOOST_TEST_TRAIT_TRUE((std::is_same<detail::resolve_overload_type<error::excel_error, xlnum, xlint, xlbool, xlerr, xlmulti>, xlerr>));
@@ -82,7 +82,7 @@ int main()
         BOOST_TEST_EQ(v2.xltype(), xltypeStr);
         BOOST_TEST_EQ(v2.get<xlstr>(), L"TEST");
     }
-/*
+
     {
         variant v(5);
         BOOST_TEST_EQ(v.xltype(), xltypeInt);
@@ -124,6 +124,6 @@ int main()
         BOOST_TEST_EQ(m.at(2, 1).get<xlnum>(), 8.1);
         BOOST_TEST_EQ(m.at(2, 2).get<xlint>(), 9);
     }
-*/
+
     return boost::report_errors();
 }

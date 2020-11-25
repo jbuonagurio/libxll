@@ -72,30 +72,37 @@ endif()
 
 if(BUILD_TESTING)
   add_executable(test_pstring ${CMAKE_CURRENT_SOURCE_DIR}/test/test_pstring.cpp)
-  target_link_libraries(test_pstring PRIVATE xll)
-  add_test(test_pstring test_pstring)
-
   add_executable(test_register ${CMAKE_CURRENT_SOURCE_DIR}/test/test_register.cpp)
-  target_link_libraries(test_register PRIVATE xll)
-  add_test(test_register test_register)  
-
   add_executable(test_xloper ${CMAKE_CURRENT_SOURCE_DIR}/test/test_xloper.cpp)
+  
+  target_link_libraries(test_pstring PRIVATE xll)
+  target_link_libraries(test_register PRIVATE xll)
   target_link_libraries(test_xloper PRIVATE xll)
+
+  if(MSVC)
+    set_target_properties(test_pstring test_register test_xloper PROPERTIES COMPILE_FLAGS "/W4")
+  elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    set_target_properties(test_pstring test_register test_xloper PROPERTIES COMPILE_FLAGS "-Wall")
+  endif()
+
+  add_test(test_pstring test_pstring)
+  add_test(test_register test_register)
   add_test(test_xloper test_xloper)
 
-  set_tests_properties(test_pstring test_register test_xloper PROPERTIES
-    FAIL_REGULAR_EXPRESSION "[^a-z]Failed")
+  set_tests_properties(test_pstring test_register test_xloper PROPERTIES FAIL_REGULAR_EXPRESSION "[^a-z]Failed")
 endif()
 
 if(BUILD_EXAMPLES)
   add_library(generic SHARED
     ${CMAKE_CURRENT_SOURCE_DIR}/src/examples/generic/addin.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/examples/generic/addin.def)
-  if(MSVC)
-    target_compile_options(generic PRIVATE /W4)
-  endif()
+  
   target_link_libraries(generic PRIVATE xll)
-  set_target_properties(generic PROPERTIES
-    OUTPUT_NAME "generic"
-    SUFFIX ".xll")
+
+  set_target_properties(generic PROPERTIES OUTPUT_NAME "generic" SUFFIX ".xll")
+  if(MSVC)
+    set_target_properties(generic PROPERTIES COMPILE_FLAGS "/W4")
+  elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    set_target_properties(generic PROPERTIES COMPILE_FLAGS "-Wall")
+  endif()
 endif()
