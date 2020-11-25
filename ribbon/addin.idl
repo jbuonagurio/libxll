@@ -1,0 +1,30 @@
+//  Copyright 2020 John Buonagurio
+//
+//  Distributed under the Boost Software License, Version 1.0.
+//
+//  See accompanying file LICENSE_1_0.txt or copy at
+//  http://www.boost.org/LICENSE_1_0.txt
+
+import "oaidl.idl";
+import "ocidl.idl";
+
+[object, uuid(8CF5DB36-9031-43F5-B448-4936F2DC0ECA), version(1.0), dual, oleautomation, local]
+interface IRibbonCallback : IDispatch
+{
+    [id(0x00000001)]
+    HRESULT ButtonClicked([in] IDispatch *pControl);
+    [id(0x00000002)]
+    HRESULT LoadImageCallback([in] BSTR *pbstrImageId, [out, retval] IPictureDisp **ppdispImage);
+};
+
+[uuid(F4708542-9A16-48B5-97C0-11EEE81FE94B), version(1.0), helpstring("XLLRibbonAddIn 1.0 Type Library")]
+library XLLRibbonAddIn
+{
+    importlib("stdole32.tlb");
+
+    [uuid(423ECC12-430F-41E9-B9D0-0E2097D729EA), helpstring("XLLRibbonAddIn Connect Class")]
+    coclass Connect
+    {
+        [default] interface IRibbonCallback;
+    };
+};

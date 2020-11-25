@@ -1,0 +1,48 @@
+#include "resource.h"
+
+#pragma code_page(65001) // UTF-8
+
+1 VERSIONINFO
+  FILEVERSION 1,0,0,1
+  PRODUCTVERSION 1,0,0,1
+  FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+  FILEFLAGS 0x1L // VS_FF_DEBUG
+#else
+  FILEFLAGS 0x0L
+#endif
+  FILEOS 0x40004L  // VOS_NT | VOS__WINDOWS32
+  FILETYPE 0x2L // VFT_DLL
+  FILESUBTYPE 0x0L // VFT2_UNKNOWN
+BEGIN
+  BLOCK "StringFileInfo"
+  BEGIN
+    BLOCK "040904B0" // Lang=US English, CharSet=Unicode
+    BEGIN
+      VALUE "CompanyName", "TODO: <Company name>"
+      VALUE "FileDescription", "TODO: <File description>"
+      VALUE "FileVersion", "1.0.0.1"
+      VALUE "LegalCopyright", "TODO: (c) <Company name>.  All rights reserved."
+      VALUE "InternalName", "XLLRibbonAddIn.dll"
+      VALUE "OriginalFilename", "XLLRibbonAddIn.dll"
+      VALUE "ProductName", "TODO: <Product name>"
+      VALUE "ProductVersion", "1.0.0.1"
+      VALUE "OLESelfRegister", "\0"
+    END
+  END
+  BLOCK "VarFileInfo"
+  BEGIN
+    VALUE "Translation", 0x409, 1200 // Lang=US English, CharSet=Unicode
+  END
+END
+
+1 TYPELIB "autogen/XLLRibbonAddIn.tlb"
+
+// Custom UI XML
+IDR_RIBBONUI RCDATA "res/ribbon.xml"
+
+// Bitmap Resources
+BITMAP_ExportData_32x BITMAP "res/ExportData_32x.bmp"
+BITMAP_ExportData_40x BITMAP "res/ExportData_40x.bmp"
+BITMAP_ExportData_48x BITMAP "res/ExportData_48x.bmp"
+BITMAP_ExportData_64x BITMAP "res/ExportData_64x.bmp"

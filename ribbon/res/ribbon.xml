@@ -1,0 +1,12 @@
+<customUI xmlns="http://schemas.microsoft.com/office/2006/01/customui" loadImage="LoadImageCallback">
+  <ribbon>
+    <tabs>
+      <tab id="CustomTab" label="Custom Tab">
+        <group id="CustomGroup" label="Custom Group">
+          <button id="CustomButton1" image="ExportData" size="large" label="Button 1" onAction="ButtonClicked" />
+          <!-- <button id="CustomButton2" imageMso="HappyFace" size="large" label="Button 2" onAction="ButtonClicked" /> -->
+        </group>
+      </tab>
+    </tabs>
+  </ribbon>
+</customUI>
