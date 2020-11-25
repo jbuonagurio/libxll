@@ -8,8 +8,6 @@
 #include <GeographicLib/Geodesic.hpp>
 #include <GeographicLib/Constants.hpp>
 
-#define XLL_EXPORT extern "C" __declspec(dllexport)
-
 /// Solves the direct geodesic problem on the WGS84 ellipsoid.
 /// \param[in] lon1 longitude at origin (degrees).
 /// \param[in] lat1 latitude at origin (degrees).
@@ -104,36 +102,42 @@ XLL_EXPORT xll::variant * __stdcall xlAddInManagerInfo12(xll::variant *xAction)
 /// \return 1 on success, 0 on failure.
 XLL_EXPORT int __stdcall xlAutoOpen()
 {
-    auto forwardOpts = xll::function_options();
-    forwardOpts.argument_text = L"lon1,lat1,x2,y2";
-    forwardOpts.category = L"Geodesic";
-    forwardOpts.function_help = L"Solves the direct geodesic problem on the WGS84 ellipsoid.";
-    forwardOpts.argument_help = {
-        L"longitude at origin (degrees).",
-        L"latitude at origin (degrees).",
-        L"x-coordinate at offset (meters).",
-        L"y-coordinate at offset (meters)."
-    };
-    xll::register_function(geodesicForward, L"geodesicForward", L"GEODESIC.FORWARD", forwardOpts);
+    {
+        xll::function_options opts;
+        opts.argument_text = L"lon1,lat1,x2,y2";
+        opts.category = L"Geodesic";
+        opts.function_help = L"Solves the direct geodesic problem on the WGS84 ellipsoid.";
+        opts.argument_help = {
+            L"longitude at origin (degrees).",
+            L"latitude at origin (degrees).",
+            L"x-coordinate at offset (meters).",
+            L"y-coordinate at offset (meters)."
+        };
+        xll::register_function(geodesicForward, L"geodesicForward", L"GEODESIC.FORWARD", opts);
+    }
 
-    auto inverseOpts = xll::function_options();
-    inverseOpts.argument_text = L"lon1,lat1,lon2,lat2";
-    inverseOpts.category = L"Geodesic";
-    inverseOpts.function_help = L"Solves the inverse geodesic problem on the WGS84 ellipsoid.";
-    inverseOpts.argument_help = {
-        L"longitude at origin (degrees).",
-        L"latitude at origin (degrees).",
-        L"longitude at offset (degrees).",
-        L"latitude at offset (degrees)."
-    };
-    xll::register_function(geodesicInverse, L"geodesicInverse", L"GEODESIC.INVERSE", inverseOpts);
-    
-    auto versionOpts = xll::function_options();
-    versionOpts.argument_text = L"arg";
-    versionOpts.category = L"Geodesic";
-    versionOpts.function_help = L"Returns the GeographicLib version.";
-    versionOpts.argument_help = { L"Argument ignored." };
-    xll::register_function(libraryVersion, L"libraryVersion", L"GEODESIC.LIBVERSION", versionOpts);
+    {
+        xll::function_options opts;
+        opts.argument_text = L"lon1,lat1,lon2,lat2";
+        opts.category = L"Geodesic";
+        opts.function_help = L"Solves the inverse geodesic problem on the WGS84 ellipsoid.";
+        opts.argument_help = {
+            L"longitude at origin (degrees).",
+            L"latitude at origin (degrees).",
+            L"longitude at offset (degrees).",
+            L"latitude at offset (degrees)."
+        };
+        xll::register_function(geodesicInverse, L"geodesicInverse", L"GEODESIC.INVERSE", opts);
+    }
+
+    {
+        xll::function_options opts;
+        opts.argument_text = L"arg";
+        opts.category = L"Geodesic";
+        opts.function_help = L"Returns the GeographicLib version.";
+        opts.argument_help = { L"Argument ignored." };
+        xll::register_function(libraryVersion, L"libraryVersion", L"GEODESIC.LIBVERSION", opts);
+    }
 
     return 1;
 }
@@ -161,6 +165,7 @@ XLL_EXPORT int __stdcall xlAutoRemove()
 /// Free internally allocated arrays and call destructor.
 XLL_EXPORT int __stdcall xlAutoFree12(xll::variant *pxFree)
 {
-    pxFree->release();
+    if (pxFree)
+        pxFree->release();
     return 1;
 }
