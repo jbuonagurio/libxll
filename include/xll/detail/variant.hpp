@@ -10,8 +10,8 @@
 #include <xll/config.hpp>
 
 #include <xll/constants.hpp>
-#include <xll/callback.hpp>
 #include <xll/detail/assert.hpp>
+#include <xll/detail/callback.hpp>
 
 #include <type_traits>
 #include <utility>
@@ -186,7 +186,9 @@ protected:
             case XLTYPE::xltypeMulti:
                 if (self_->flags() & xlbitXLFree) {
                     // Excel allocated memory; call xlFree
-                    Excel12(xlFree, nullptr, self_);
+                    auto pfn = detail::MdCallBack12();
+	                if (pfn != nullptr)
+                        (pfn)(xlFree, 1, (void **)&self_, nullptr);
                 }
                 else if (self_->flags() & xlbitDLLFree) {
                     // Destroyed in xlAutoFree12
