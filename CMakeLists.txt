@@ -51,15 +51,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(BUILD_SHARED_LIBS ON)
 
 # Common Options
-option(XLL_USE_SPDLOG "Enable debug logging wth spdlog" OFF)
-option(BUILD_EXAMPLES "Build examples" ON)
-option(BUILD_TESTING "Build tests" ON)
+option(BUILD_EXAMPLES "Build examples" OFF)
+option(BUILD_TESTING "Build tests" OFF)
 
 # Dependencies
 find_package(Boost REQUIRED)
-if(XLL_USE_SPDLOG)
-  find_package(spdlog CONFIG REQUIRED)
-endif()
 
 #-------------------------------------------------------------------------------
 # Interface Target
@@ -75,11 +71,6 @@ target_include_directories(xll INTERFACE
   "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>")
 
 target_link_libraries(xll INTERFACE Boost::boost)
-
-if(XLL_USE_SPDLOG)
-  target_link_libraries(xll INTERFACE spdlog::spdlog)
-  target_compile_definitions(xll INTERFACE XLL_USE_SPDLOG=1)
-endif()
 
 #-------------------------------------------------------------------------------
 # Tests
