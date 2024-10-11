@@ -1,0 +1,12 @@
+LIBRARY generic.xll
+
+EXPORTS
+	xlAddInManagerInfo12
+	xlAutoOpen
+	xlAutoClose
+	xlAutoAdd
+	xlAutoRemove
+	xlAutoFree12
+	test_string
+	test_dialog
+	get_stack_size

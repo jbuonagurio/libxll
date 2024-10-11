@@ -28,7 +28,11 @@ The following is a minimal example of functions to be implemented by the user to
 ```cpp
 #include <xll/xll.hpp>
 
-#define XLL_EXPORT extern "C" __declspec(dllexport)
+XLL_EXPORT const char * __stdcall testFunction(xll::variant *)
+{
+    const char *result = "Success!";
+    return result;
+}
 
 /// This function is called by the Add-in Manager to find the long name of the
 /// add-in. If xAction = 1, this function should return a string containing the
@@ -37,8 +41,8 @@ The following is a minimal example of functions to be implemented by the user to
 XLL_EXPORT xll::variant * __stdcall xlAddInManagerInfo12(xll::variant *xAction)
 {
     using namespace xll;
-    
-    thread_local variant xInfo, xIntAction;
+
+    static variant xInfo, xIntAction;
     xloper<xlint> xDestType(xltypeInt);
 
     Excel12(xlCoerce, &xIntAction, xAction, &xDestType);
@@ -47,7 +51,7 @@ XLL_EXPORT xll::variant * __stdcall xlAddInManagerInfo12(xll::variant *xAction)
         xInfo = L"Sample XLL";
     else
         xInfo = error::excel_error::xlerrValue;
-    
+
     return &xInfo;
 }
 
@@ -57,11 +61,10 @@ XLL_EXPORT xll::variant * __stdcall xlAddInManagerInfo12(xll::variant *xAction)
 XLL_EXPORT int __stdcall xlAutoOpen()
 {
     auto opts = xll::function_options();
-    opts.argument_text = L"arg1,arg2";
+    opts.argument_text = L"arg";
     opts.category = L"Sample";
-    opts.function_help = L"Sample function to do something with two arguments.";
-    opts.argument_help = { L"first argument.", L"second argument." };
-    
+    opts.function_help = L"Sample function returning a string.";
+    opts.argument_help = { L"Argument ignored." };
     xll::register_function(testFunction, L"testFunction", L"TEST.FUNCTION", opts);
 
     return 1;
@@ -90,7 +93,8 @@ XLL_EXPORT int __stdcall xlAutoRemove()
 /// Free internally allocated arrays and call destructor.
 XLL_EXPORT int __stdcall xlAutoFree12(xll::variant *pxFree)
 {
-    pxFree->release();
+    if (pxFree)
+        pxFree->release();
     return 1;
 }
 

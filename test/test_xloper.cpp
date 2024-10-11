@@ -74,13 +74,68 @@ int main()
         variant v(L"TEST");
         BOOST_TEST_EQ(v.xltype(), xltypeStr);
         BOOST_TEST_EQ(v.get<xlstr>(), L"TEST");
+        v.release();
+        BOOST_TEST_EQ(v.xltype(), xltypeMissing);
     }
 
     {
         variant v1(L"TEST");
         variant v2(v1);
+        BOOST_TEST_EQ(v1.xltype(), xltypeStr);
         BOOST_TEST_EQ(v2.xltype(), xltypeStr);
         BOOST_TEST_EQ(v2.get<xlstr>(), L"TEST");
+    }
+
+    {
+        variant v1(L"TEST");
+        variant v2(std::move(v1));
+        BOOST_TEST_EQ(v1.xltype(), xltypeMissing);
+        BOOST_TEST_EQ(v2.xltype(), xltypeStr);
+        BOOST_TEST_EQ(v2.get<xlstr>(), L"TEST");
+    }
+
+    {
+        variant v1(L"TEST");
+        v1.set_flags(xlbitDLLFree);
+        variant v2(v1);
+        BOOST_TEST_EQ(v1.xltype(), xltypeStr);
+        BOOST_TEST_EQ(v1.get<xlstr>(), L"TEST");
+    }
+
+    {
+        variant v1(L"TEST");
+        v1.set_flags(xlbitDLLFree);
+        variant v2(std::move(v1));
+        BOOST_TEST_EQ(v1.xltype(), xltypeMissing);
+    }
+
+    {
+        variant v(L"TEST");
+        v.set_flags(xlbitDLLFree);
+        v.release();
+        BOOST_TEST_EQ(v.xltype(), xltypeStr);
+        BOOST_TEST_EQ(v.get<xlstr>(), L"TEST");
+        v.reset_flags(xlbitDLLFree);
+        v.release();
+        BOOST_TEST_EQ(v.xltype(), xltypeMissing);
+    }
+    
+    {
+        variant v(L"TEST");
+        v.set_flags(xlbitXLFree);
+        v.release();
+        BOOST_TEST_EQ(v.xltype(), xltypeStr);
+        BOOST_TEST_EQ(v.get<xlstr>(), L"TEST");
+        v.reset_flags(xlbitXLFree);
+        v.release();
+        BOOST_TEST_EQ(v.xltype(), xltypeMissing);
+    }
+
+    {
+        xlint x = 1;
+        xlnum y(1.5);
+        auto z = x + y;
+        BOOST_TEST_EQ(z, 2.5);
     }
 
     {

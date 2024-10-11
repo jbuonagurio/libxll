@@ -85,14 +85,14 @@ XLL_EXPORT xll::variant * __stdcall xlAddInManagerInfo12(xll::variant *xAction)
     using namespace xll;
 	
     thread_local variant xInfo, xIntAction;
-    xloper<tag::xlint> xDestType(xltypeInt);
+    xloper<xlint> xDestType(xltypeInt);
 
 	Excel12(xlCoerce, &xIntAction, xAction, &xDestType);
     
-    if (xIntAction.xltype() == xltypeInt && xIntAction.get<tag::xlint>().w == 1)
-        xInfo.emplace<tag::xlstr>(L"Geodesic Routines");
+    if (xIntAction.xltype() == xltypeInt && xIntAction.get<xlint>().w == 1)
+        xInfo.emplace<xlstr>(L"Geodesic Routines");
     else
-        xInfo.emplace<tag::xlerr>(error::excel_error::xlerrValue);
+        xInfo.emplace<xlerr>(error::excel_error::xlerrValue);
     
 	return &xInfo;
 }
