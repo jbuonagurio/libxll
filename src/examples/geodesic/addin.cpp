@@ -83,18 +83,18 @@ XLL_EXPORT const char * __stdcall libraryVersion(xll::variant *)
 XLL_EXPORT xll::variant * __stdcall xlAddInManagerInfo12(xll::variant *xAction)
 {
     using namespace xll;
-	
+    
     thread_local variant xInfo, xIntAction;
     xloper<xlint> xDestType(xltypeInt);
 
-	Excel12(xlCoerce, &xIntAction, xAction, &xDestType);
+    Excel12(xlCoerce, &xIntAction, xAction, &xDestType);
     
     if (xIntAction.xltype() == xltypeInt && xIntAction.get<xlint>().w == 1)
         xInfo.emplace<xlstr>(L"Geodesic Routines");
     else
         xInfo.emplace<xlerr>(error::excel_error::xlerrValue);
     
-	return &xInfo;
+    return &xInfo;
 }
 
 /// Excel calls xlAutoOpen when the XLL is loaded. Register all functions and
