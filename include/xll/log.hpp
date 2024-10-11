@@ -65,7 +65,6 @@ inline auto log() {
 
 #include <memory>
 #include <mutex>
-#include <iostream>
 
 namespace fmt {
 
@@ -100,6 +99,8 @@ struct formatter<xll::XLRET>
 namespace xll {
 namespace sinks {
 
+#if BOOST_OS_WINDOWS
+
 template<typename Mutex>
 class debug_sink : public spdlog::sinks::base_sink<Mutex>
 {
@@ -111,12 +112,13 @@ protected:
         spdlog::memory_buf_t formatted;
         base_sink<Mutex>::formatter_->format(msg, formatted);
         boost::winapi::OutputDebugStringA(fmt::to_string(formatted).c_str());
-        //std::cerr << fmt::to_string(formatted) << std::endl;
     }
     void flush_() override {}
 };
 
 using debug_sink_mt = debug_sink<std::mutex>;
+
+#endif
 
 } // namespace sinks
 
