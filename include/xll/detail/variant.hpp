@@ -8,6 +8,7 @@
 #pragma once
 
 #include <xll/config.hpp>
+
 #include <xll/constants.hpp>
 #include <xll/callback.hpp>
 #include <xll/detail/assert.hpp>
@@ -184,7 +185,11 @@ protected:
             case XLTYPE::xltypeRef:
             case XLTYPE::xltypeMulti:
                 if (self_->flags() & xlbitXLFree) {
-                    Excel12(xlFree, nullptr, self_); // Excel allocated memory
+                    // Excel allocated memory; call xlFree
+                    Excel12(xlFree, nullptr, self_);
+                }
+                else if (self_->flags() & xlbitDLLFree) {
+                    // Destroyed in xlAutoFree12
                 }
                 else {
                     self_->st_.get(I()).~T();
@@ -282,11 +287,17 @@ public:
     constexpr uint32_t flags() const noexcept
         { return (xltype_ & 0xF000); }
 
+    // Sets xlbit flags (xlbitXLFree, xlbitDLLFree).
     constexpr void set_flags(uint32_t flags) noexcept
         { xltype_ |= (flags & 0xF000); }
 
-    constexpr void clear_flags(uint32_t flags) noexcept
+    // Clears xlbit flags (xlbitXLFree, xlbitDLLFree).
+    constexpr void reset_flags(uint32_t flags) noexcept
         { xltype_ &= ~(flags & 0xF000); }
+
+    // Clears all xlbit flags (xlbitXLFree, xlbitDLLFree).
+    constexpr void clear_flags() noexcept
+        { xltype_ &= 0x0FFF; }
 };
 
 template<class... Ts>
@@ -328,14 +339,14 @@ public:
 
     constexpr variant_base& operator=(const variant_base& rhs) noexcept(mp11::mp_all<std::is_nothrow_copy_constructible<Ts>...>::value)
     {
-        destroy();
+        this->destroy();
         mp11::mp_with_index<sizeof...(Ts)>(rhs.index(), copy_construct_impl{*this, rhs});
         return *this;
     }
 
     constexpr variant_base& operator=(variant_base&& rhs) noexcept
     {
-        destroy();
+        this->destroy();
         mp11::mp_with_index<sizeof...(Ts)>(rhs.index(), move_construct_impl{*this, rhs});
         return *this;
     }

@@ -26,7 +26,7 @@ inline xlstr get_name()
     int rc = Excel12(xlGetName, &result);
     if (rc != XLRET::xlretSuccess && result.xltype() != xltypeStr)
         return {};
-    return result.get<xlstr>();
+    return result.get<xlstr>(); // xlFree
 }
 
 /// Returns the number of bytes remaining on the stack.
@@ -54,23 +54,46 @@ inline int get_hwnd()
 /// Converts one type of XLOPER to another, if possible.
 /// \sa https://docs.microsoft.com/en-us/office/client-developer/excel/xlcoerce
 template<XLTYPE... Ts>
-inline variant coerce(variant& source)
+inline variant coerce(const variant& source)
 {
-    constexpr int flags = (Ts | ...);
     variant result;
+    constexpr int flags = (Ts | ...);
     xloper<xlint> types(flags);
-    Excel12(xlCoerce, &result, &source, &types);
-    return result;
+    Excel12(xlCoerce, &result, source, &types);
+    return result; // xlFree (xltypeStr, xltypeMulti)
 }
 
 /// Returns the ID of a named sheet.
 /// \sa https://docs.microsoft.com/en-us/office/client-developer/excel/xlsheetid
 //Excel12(xlSheetId, LPXLOPER12 pxRes, 1, LPXLOPER12 pxSheetName);
 
-// xlSheetNm
 /// Returns the name of a worksheet or macro sheet from its internal sheet ID.
 /// \sa https://docs.microsoft.com/en-us/office/client-developer/excel/xlsheetnm
 //Excel12(xlSheetNm, LPXLOPER12 pxRes, 1, LPXLOPER12 pxExtref);
+
+/// Allocates persistent storage using xltypeBigData.
+/// \sa https://learn.microsoft.com/en-us/office/client-developer/excel/xldefinebinaryname
+inline int define_binary_name(const std::wstring& name, const xlbigdata& handle)
+{
+    xloper<xlstr> arg1(name);
+    variant arg2(xlmissing{});
+    if (handle.h != nullptr)
+        arg2.emplace<xlbigdata>(handle);
+    return Excel12(xlDefineBinaryName, nullptr, &arg1, &arg2);
+}
+
+/// Returns persistent storage using xltypeBigData.
+/// \sa https://learn.microsoft.com/en-us/office/client-developer/excel/xlgetbinaryname
+//Excel12(xlGetBinaryName, LPXLOPER12 pxRes, 1, LPXLOPER12 pxName);
+inline xlbigdata get_binary_name(const std::wstring& name)
+{
+    xloper<xlstr> arg1(name);
+    variant result;
+    int rc = Excel12(xlGetBinaryName, &result, &arg1);
+    if (rc != XLRET::xlretSuccess || result.xltype() != xltypeBigData)
+        return xlbigdata{};
+    return result.get<xlbigdata>();
+}
 
 /// Puts constant values into cells or ranges very quickly.
 /// \sa https://docs.microsoft.com/en-us/office/client-developer/excel/xlset
@@ -101,7 +124,7 @@ inline bool async_return(xloper<xlbigdata>& handle, variant& value)
 {
     variant result;
     int rc = Excel12(xlAsyncReturn, &result, &handle, &value);
-    if (rc != XLRET::xlretSuccess && result.xltype() != xltypeBool)
+    if (rc != XLRET::xlretSuccess || result.xltype() != xltypeBool)
         return false;
     return static_cast<bool>(result.get<xlbool>());
 }
@@ -110,11 +133,11 @@ inline bool async_return(xloper<xlbigdata>& handle, variant& value)
 /// \sa https://docs.microsoft.com/en-us/office/client-developer/excel/xleventregister
 inline bool register_event(const std::wstring& procedure, XLEVENT event)
 {
+    variant result;
     xloper<xlstr> arg1(procedure);
     xloper<xlint> arg2(event);
-    variant result;
     int rc = Excel12(xlEventRegister, &result, &arg1, &arg2);
-    if (rc != XLRET::xlretSuccess && result.xltype() != xltypeBool)
+    if (rc != XLRET::xlretSuccess || result.xltype() != xltypeBool)
         return false;
     return static_cast<bool>(result.get<xlbool>());
 }
@@ -126,7 +149,7 @@ inline bool unload()
     variant result;
     variant name(get_name());
     int rc = Excel12(xlfUnregister, &result, &name);
-    if (rc != XLRET::xlretSuccess && result.xltype() != xltypeBool)
+    if (rc != XLRET::xlretSuccess || result.xltype() != xltypeBool)
         return false;
     return static_cast<bool>(result.get<xlbool>());
 }
@@ -135,10 +158,10 @@ inline bool unload()
 /// \sa https://docs.microsoft.com/en-us/office/client-developer/excel/xlfunregister-form-1
 inline bool unregister(double id)
 {
-    xloper<xlnum> idvar(id);
     variant result;
+    xloper<xlnum> idvar(id);
     int rc = Excel12(xlfUnregister, &result, &idvar);
-    if (rc != XLRET::xlretSuccess && result.xltype() != xltypeBool)
+    if (rc != XLRET::xlretSuccess || result.xltype() != xltypeBool)
         return false;
     return static_cast<bool>(result.get<xlbool>());
 }
@@ -149,7 +172,7 @@ inline bool check_interrupt()
 {
     variant result;
     int rc = Excel12(xlAbort, &result);
-    if (rc != XLRET::xlretSuccess && result.xltype() != xltypeBool)
+    if (rc != XLRET::xlretSuccess || result.xltype() != xltypeBool)
         return false;
     return static_cast<bool>(result.get<xlbool>());
 }

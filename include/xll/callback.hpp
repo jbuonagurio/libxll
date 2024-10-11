@@ -15,8 +15,6 @@
 #include <xll/detail/variant.hpp>
 #include <xll/log.hpp>
 
-#include <boost/winapi/dll.hpp>
-
 #include <array>
 #include <type_traits>
 
@@ -39,9 +37,11 @@ inline int Excel12v(int xlfn, R *result, std::array<V*, N>& opers, std::size_t c
     static_assert(std::is_base_of_v<detail::variant_common_type, R>, "invalid result type");
 
     auto pfn = detail::MdCallBack12<R, V>();
-	if (pfn == nullptr)
+	if (pfn == nullptr) {
+        xll::log()->error("Callback failed: entry point not found.");
         return XLRET::xlretFailed;
-    
+    }
+
     int rc = (pfn)(xlfn, static_cast<int>(count), opers.data(), result);
     if (rc != XLRET::xlretSuccess) {
         xll::log()->error("Callback failed: xlfn {}, return code {:#06x}", xlfn, rc);

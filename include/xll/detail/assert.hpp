@@ -33,7 +33,7 @@ inline void assertion_failed(const char *expr, [[maybe_unused]] const char *func
     // xlfUnregister (Form 2) to force unload and deactivation of the DLL.
 
     auto pfn = detail::MdCallBack12();
-	if (pfn == nullptr)
+    if (pfn == nullptr)
         std::abort();
     
     void *xDLL = nullptr;

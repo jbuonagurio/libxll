@@ -284,6 +284,14 @@ struct xlmulti : detail::xlmulti_base<
         return lparray;
     }
 
+    inline unsigned size1() const noexcept {
+        return static_cast<unsigned>(rows_);
+    }
+
+    inline unsigned size2() const noexcept {
+        return static_cast<unsigned>(cols_);
+    }
+
     inline std::size_t size() const noexcept {
         return static_cast<std::size_t>(rows_ * cols_);
     }

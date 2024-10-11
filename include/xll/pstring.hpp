@@ -301,7 +301,7 @@ public:
     {
         const size_type nchars = static_cast<size_type>(
             std::char_traits<FromCharT>::length(s)); // truncate
-        std::basic_string<CharT> narrow = boost::nowide::narrow(cs, nchars);
+        std::basic_string<CharT> narrow = boost::nowide::narrow(s, nchars);
         internal_copy(narrow);
     }
 

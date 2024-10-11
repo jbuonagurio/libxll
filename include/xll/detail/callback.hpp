@@ -18,6 +18,11 @@
 namespace xll {
 namespace detail {
 
+#if BOOST_COMP_CLANG
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wignored-attributes"
+#endif
+
 template<class R = void, class V = void>
 using EXCEL12PROC = int (__stdcall *)(int xlfn, int coper, V **rgpvalue12, R *value12Res);
 
@@ -36,6 +41,10 @@ BOOST_FORCEINLINE EXCEL12PROC<R, V> MdCallBack12()
 
 // LPenHelper symbol from Excel 2010 SDK; not present in Excel 2013 SDK.
 using LPENHELPERPROC = long (__stdcall *)(int wCode, void *lpv);
+
+#if BOOST_COMP_CLANG
+#pragma clang diagnostic pop
+#endif
 
 } // namespace detail
 } // namespace xll

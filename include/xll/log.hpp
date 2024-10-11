@@ -16,6 +16,7 @@
 
 #ifndef XLL_USE_SPDLOG
 
+#include <memory>
 #include <string_view>
 
 namespace xll {
@@ -55,10 +56,16 @@ inline auto log() {
 #endif
 
 #include <spdlog/spdlog.h>
+
+#if BOOST_OS_WINDOWS
 #include <spdlog/sinks/base_sink.h>
+#else
+#include <spdlog/sinks/syslog_sink.h>
+#endif
 
 #include <memory>
 #include <mutex>
+#include <iostream>
 
 namespace fmt {
 
@@ -98,26 +105,20 @@ class debug_sink : public spdlog::sinks::base_sink<Mutex>
 {
 public:
     explicit debug_sink() {}
-
 protected:
     void sink_it_(const spdlog::details::log_msg& msg) override
     {
         spdlog::memory_buf_t formatted;
         base_sink<Mutex>::formatter_->format(msg, formatted);
-#if BOOST_OS_WINDOWS
         boost::winapi::OutputDebugStringA(fmt::to_string(formatted).c_str());
-#else
-        std::clog << fmt::to_string(formatted);
-#endif
+        //std::cerr << fmt::to_string(formatted) << std::endl;
     }
-
     void flush_() override {}
 };
 
 using debug_sink_mt = debug_sink<std::mutex>;
 
 } // namespace sinks
-
 
 inline int process_id()
 {
@@ -141,8 +142,12 @@ inline std::size_t thread_id()
 
 inline auto log()
 {
+#if BOOST_OS_WINDOWS
     static auto sink = std::make_shared<sinks::debug_sink_mt>();
     static auto logger = std::make_shared<spdlog::logger>("xll", sink);
+#else    
+    static auto logger = spdlog::syslog_logger_mt("xll");
+#endif
 
     std::once_flag flag;
     std::call_once(flag, [](){

@@ -7,7 +7,7 @@
 
 #pragma once
 
-// Main Dependencies:
+// Boost Dependencies:
 // - Boost.Assert
 // - Boost.Config
 // - Boost.MP11
