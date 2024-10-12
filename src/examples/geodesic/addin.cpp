@@ -92,7 +92,7 @@ XLL_EXPORT xll::variant * __stdcall xlAddInManagerInfo12(xll::variant *xAction)
     if (xIntAction.xltype() == xltypeInt && xIntAction.get<xlint>().w == 1)
         xInfo.emplace<xlstr>(L"Geodesic Routines");
     else
-        xInfo.emplace<xlerr>(error::excel_error::xlerrValue);
+        xInfo.emplace<xlerr>(error::xlerrValue);
     
     return &xInfo;
 }
