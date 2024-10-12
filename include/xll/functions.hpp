@@ -22,9 +22,9 @@ namespace xll {
 /// \sa https://docs.microsoft.com/en-us/office/client-developer/excel/xlgetname
 inline xlstr get_name()
 {
-    variant result;
+    static variant result; // Not thread-safe
     int rc = Excel12(xlGetName, &result);
-    if (rc != XLRET::xlretSuccess && result.xltype() != xltypeStr)
+    if (rc != XLRET::xlretSuccess || result.xltype() != xltypeStr)
         return {};
     return result.get<xlstr>(); // xlFree
 }
@@ -35,7 +35,7 @@ inline int stack_size()
 {
     variant result;
     int rc = Excel12(xlStack, &result);
-    if (rc != XLRET::xlretSuccess && result.xltype() != xltypeInt)
+    if (rc != XLRET::xlretSuccess || result.xltype() != xltypeInt)
         return 0;
     return static_cast<int>(result.get<xlint>());
 }
@@ -46,7 +46,7 @@ inline int get_hwnd()
 {
     variant result;
     int rc = Excel12(xlGetHwnd, &result);
-    if (rc != XLRET::xlretSuccess && result.xltype() != xltypeInt)
+    if (rc != XLRET::xlretSuccess || result.xltype() != xltypeInt)
         return 0; // Invalid HWND
     return static_cast<int>(result.get<xlint>());
 }
