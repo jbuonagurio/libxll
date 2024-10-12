@@ -17,14 +17,21 @@ XLL_EXPORT xll::variant * __stdcall xlAddInManagerInfo12(xll::variant *xAction)
     using namespace xll;
 
     static variant xInfo, xIntAction;
-    xloper<xlint> xDestType(xltypeInt);
-
-    Excel12(xlCoerce, &xIntAction, xAction, &xDestType);
+    switch (xAction->xltype()) {
+    case xltypeNum:
+        xIntAction = static_cast<int>(xAction->get<xlnum>());
+        break;
+    case xltypeInt:
+        xIntAction = xAction->get<xlint>();
+        break;
+    default:
+        break;
+    }
     
     if (xIntAction.xltype() == xltypeInt && xIntAction.get<xlint>() == 1)
         xInfo = L"Sample XLL";
     else
-        xInfo = error::excel_error::xlerrValue;
+        xInfo = error::xlerrValue;
     
     return &xInfo;
 }
