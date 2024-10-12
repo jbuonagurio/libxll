@@ -149,7 +149,20 @@ int main()
         BOOST_TEST_EQ(v.xltype(), xltypeNum);
         BOOST_TEST_EQ(v.get<xlnum>(), 10.5);
     }
-    
+
+    {
+        variant v(error::xlerrValue);
+        BOOST_TEST_EQ(v.xltype(), xltypeErr);
+        BOOST_TEST_EQ(v.get<xlerr>(), error::xlerrValue);
+    }
+
+    {
+        variant v;
+        v = error::xlerrValue;
+        BOOST_TEST_EQ(v.xltype(), xltypeErr);
+        BOOST_TEST_EQ(v.get<xlerr>(), error::xlerrValue);
+    }
+
     {
         variant v((xlbool)true);
         BOOST_TEST_EQ(v.xltype(), xltypeBool);
