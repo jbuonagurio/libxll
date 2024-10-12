@@ -54,7 +54,7 @@ inline int get_hwnd()
 /// Converts one type of XLOPER to another, if possible.
 /// \sa https://docs.microsoft.com/en-us/office/client-developer/excel/xlcoerce
 template<XLTYPE... Ts>
-inline variant coerce(const variant& source)
+inline variant coerce(const variant *source)
 {
     variant result;
     constexpr int flags = (Ts | ...);
