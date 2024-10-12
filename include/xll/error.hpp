@@ -22,14 +22,20 @@ namespace error {
 //
 
 enum excel_error : int {
-    xlerrNull = 0,         // #NULL!
-    xlerrDiv0 = 7,         // #DIV/0!
-    xlerrValue = 15,       // #VALUE!
-    xlerrRef = 23,         // #REF!
-    xlerrName = 29,        // #NAME?
-    xlerrNum = 36,         // #NUM!
-    xlerrNA = 42,          // #N/A
-    xlerrGettingData = 43  // #GETTING_DATA
+    xlerrNull        = 0,  // #NULL!
+    xlerrDiv0        = 7,  // #DIV/0!
+    xlerrValue       = 15, // #VALUE!
+    xlerrRef         = 23, // #REF!
+    xlerrName        = 29, // #NAME?
+    xlerrNum         = 36, // #NUM!
+    xlerrNA          = 42, // #N/A
+    xlerrGettingData = 43, // #GETTING_DATA
+    xlerrSpill       = 45, // #SPILL!
+    xlerrConnect     = 46, // #CONNECT!
+    xlerrBlocked     = 47, // #BLOCKED!
+    xlerrUnknown     = 48, // #UNKNOWN!
+    xlerrField       = 49, // #FIELD!
+    xlerrCalc        = 50, // #CALC!
 };
 
 extern inline const std::error_category& get_excel_category();

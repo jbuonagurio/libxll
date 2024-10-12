@@ -69,6 +69,33 @@ inline auto log() {
 namespace fmt {
 
 template<>
+struct formatter<xll::XLTYPE>
+{
+    template<typename ParseContext>
+    constexpr auto parse(ParseContext &ctx) { return ctx.begin(); }
+
+    template<typename FormatContext>
+    auto format(xll::XLTYPE xltype, FormatContext &ctx)
+    {
+        switch (xltype) {
+        case xll::XLTYPE::xltypeNum:                   return format_to(ctx.out(), "xltypeNum");
+        case xll::XLTYPE::xltypeStr:                   return format_to(ctx.out(), "xltypeStr");
+        case xll::XLTYPE::xltypeBool:                  return format_to(ctx.out(), "xltypeBool");
+        case xll::XLTYPE::xltypeRef:                   return format_to(ctx.out(), "xltypeRef");
+        case xll::XLTYPE::xltypeErr:                   return format_to(ctx.out(), "xltypeErr");
+        case xll::XLTYPE::xltypeFlow:                  return format_to(ctx.out(), "xltypeFlow");
+        case xll::XLTYPE::xltypeMulti:                 return format_to(ctx.out(), "xltypeMulti");
+        case xll::XLTYPE::xltypeMissing:               return format_to(ctx.out(), "xltypeMissing");
+        case xll::XLTYPE::xltypeNil:                   return format_to(ctx.out(), "xltypeNil");
+        case xll::XLTYPE::xltypeSRef:                  return format_to(ctx.out(), "xltypeSRef");
+        case xll::XLTYPE::xltypeInt:                   return format_to(ctx.out(), "xltypeInt");
+        case xll::XLTYPE::xltypeBigData:               return format_to(ctx.out(), "xltypeBigData");
+        default:                                       return format_to(ctx.out(), static_cast<int>(xltype));
+        }
+    }
+};
+
+template<>
 struct formatter<xll::XLRET>
 {
     template<typename ParseContext>

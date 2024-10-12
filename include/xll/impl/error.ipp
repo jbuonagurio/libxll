@@ -17,9 +17,9 @@ struct excel_category : public std::error_category
 {
     const char* name() const noexcept
     {
-        return "xlerr";
+        return "Excel";
     }
-
+    
     std::string message(int value) const
     {
         if (value == error::xlerrNull)
@@ -38,7 +38,20 @@ struct excel_category : public std::error_category
             return "#N/A";
         if (value == error::xlerrGettingData)
             return "#GETTING_DATA";
-        return "#UNKNOWN!";
+        if (value == error::xlerrSpill)
+            return "#SPILL!";
+        if (value == error::xlerrConnect)
+            return "#CONNECT!";
+        if (value == error::xlerrBlocked)
+            return "#BLOCKED!";
+        if (value == error::xlerrUnknown)
+            return "#UNKNOWN!";
+        if (value == error::xlerrField)
+            return "#FIELD!";
+        if (value == error::xlerrCalc)
+            return "#CALC!";
+        
+        return {};
     }
 };
 
