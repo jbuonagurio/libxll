@@ -27,7 +27,7 @@ namespace xll {
 namespace detail {
 
 template<class CharT, std::size_t N>
-struct basic_pstring_literal_impl
+struct basic_pstring_view_impl
 {
     static_assert(N < std::numeric_limits<CharT>::max(),
         "string length exceeds Excel 12 limit");
@@ -41,7 +41,7 @@ protected:
 
 public:
     template<class... Chars>
-    constexpr basic_pstring_literal_impl(Chars... args)
+    constexpr basic_pstring_view_impl(Chars... args)
         : data_{static_cast<CharT>(N), args...}
     {}
 
@@ -69,12 +69,12 @@ public:
         return std::basic_string<CharT>(&data_[1], N);
     }
 
-    friend bool operator==(const basic_pstring_literal_impl& lhs, const basic_pstring_literal_impl& rhs) {
+    friend bool operator==(const basic_pstring_view_impl& lhs, const basic_pstring_view_impl& rhs) {
         return std::basic_string_view<CharT>{ lhs.data(), lhs.size() } ==
                std::basic_string_view<CharT>{ rhs.data(), rhs.size() };
     }
 
-    friend std::basic_ostream<CharT>& operator<<(std::basic_ostream<CharT>& os, const basic_pstring_literal_impl& s) {
+    friend std::basic_ostream<CharT>& operator<<(std::basic_ostream<CharT>& os, const basic_pstring_view_impl& s) {
         os << std::basic_string_view<CharT>{ s.data(), s.size() };
         return os;
     }
@@ -82,30 +82,30 @@ public:
 
 } // namespace detail
 
-/// Generates pascal string from a C string literal at compile-time.
+/// Generates pascal string view from a C string literal at compile-time.
 template<class CharT, std::size_t N>
-struct basic_pstring_literal : public detail::basic_pstring_literal_impl<CharT, N - 1>
+struct basic_pstring_view : public detail::basic_pstring_view_impl<CharT, N - 1>
 {
 protected:
     template<std::size_t... Is>
-    constexpr basic_pstring_literal(const CharT(&str)[N], std::index_sequence<Is...>)
-        : detail::basic_pstring_literal_impl<CharT, N - 1>(str[Is]...)
+    constexpr basic_pstring_view(const CharT(&str)[N], std::index_sequence<Is...>)
+        : detail::basic_pstring_view_impl<CharT, N - 1>(str[Is]...)
     {}
 
 public:
-    constexpr basic_pstring_literal(const CharT(&str)[N])
-        : basic_pstring_literal(str, std::make_index_sequence<N - 1>{})
+    constexpr basic_pstring_view(const CharT(&str)[N])
+        : basic_pstring_view(str, std::make_index_sequence<N - 1>{})
     {}
 };
 
 /// Generates pascal string from std::array at compile-time.
 template<class CharT, std::size_t N>
-struct basic_pstring_array : public detail::basic_pstring_literal_impl<CharT, N>
+struct basic_pstring_array : public detail::basic_pstring_view_impl<CharT, N>
 {
 protected:
     template<std::size_t... Is>
     constexpr basic_pstring_array(const std::array<CharT, N>& arr, std::index_sequence<Is...>)
-        : detail::basic_pstring_literal_impl<CharT, N>(arr[Is]...)
+        : detail::basic_pstring_view_impl<CharT, N>(arr[Is]...)
     {}
 
 public:
@@ -119,10 +119,10 @@ public:
 };
 
 template<std::size_t N>
-using pstring_literal = basic_pstring_literal<char, N>;
+using pstring_view = basic_pstring_view<char, N>;
 
 template<std::size_t N>
-using wpstring_literal = basic_pstring_literal<wchar_t, N>;
+using wpstring_view = basic_pstring_view<wchar_t, N>;
 
 template<std::size_t N>
 using pstring_array = basic_pstring_array<char, N>;
@@ -131,15 +131,15 @@ template<std::size_t N>
 using wpstring_array = basic_pstring_array<wchar_t, N>;
 
 template<std::size_t N>
-constexpr pstring_literal<N> make_pstring_literal(const char(&str)[N])
+constexpr pstring_view<N> make_pstring_view(const char(&str)[N])
 {
-    return pstring_literal<N>(str);
+    return pstring_view<N>(str);
 }
 
 template<std::size_t N>
-constexpr wpstring_literal<N> make_wpstring_literal(const wchar_t(&str)[N])
+constexpr wpstring_view<N> make_wpstring_view(const wchar_t(&str)[N])
 {
-    return wpstring_literal<N>(str);
+    return wpstring_view<N>(str);
 }
 
 template<std::size_t N>
@@ -170,7 +170,7 @@ constexpr wpstring_array<N> make_wpstring_array(const std::array<wchar_t, N>& ar
 
 /// Allocates new pascal string at runtime, performing UTF-8/UTF-16 conversion
 /// as necessary using Boost.Nowide. For compile-time fixed strings that don't
-/// require character set conversion, use xll::basic_pstring_literal.
+/// require character set conversion, use xll::basic_pstring_view.
 ///
 /// Win32 API (MultiByteToWideChar, WideCharToMultiByte), Boost.Text or ICU
 /// could be used as alternatives. std::wstring_convert and
@@ -262,14 +262,19 @@ public:
         return *this;
     }
 
+    // No Conversion
     template<std::size_t N>
-    explicit basic_pstring(const detail::basic_pstring_literal_impl<CharT, N>& s)
+    explicit basic_pstring(const detail::basic_pstring_view_impl<CharT, N>& s)
         { internal_copy(s.data(), static_cast<size_type>(N)); }
 
     // No Conversion
     basic_pstring(const CharT* s)
         { internal_copy(s); }
-
+    
+    // No Conversion
+    basic_pstring(const CharT* s, size_type n)
+        { internal_copy(s, n); }
+    
     // No Conversion
     basic_pstring(const std::basic_string<CharT>& s)
         { internal_copy(s); }
@@ -391,4 +396,20 @@ using wpstring = basic_pstring<wchar_t>;
 static_assert(sizeof(pstring) == sizeof(void *), "invalid pstring size");
 static_assert(sizeof(wpstring) == sizeof(void *), "invalid wpstring size");
 
+} // namespace xll
+
+namespace xll {
+inline namespace literals {
+inline namespace pstring_literals {
+
+inline pstring operator"" _ps(const char *str, std::size_t len) {
+    return pstring(str, len);
+}
+
+inline wpstring operator"" _ps(const wchar_t *str, std::size_t len) {
+    return wpstring(str, len);
+}
+
+} // namespace pstring_literals
+} // namespace literals
 } // namespace xll

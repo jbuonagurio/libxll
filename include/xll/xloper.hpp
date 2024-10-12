@@ -49,7 +49,4 @@ using xloper = detail::variant_base<T>;
 // Used for async call handle parameters.
 using handle = detail::variant_base<xlbigdata>;
 
-template<std::size_t N>
-using literal = detail::variant_base<basic_pstring_literal<wchar_t, N>>;
-
 } // namespace xll

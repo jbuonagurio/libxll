@@ -8,6 +8,7 @@
 #include <xll/xll.hpp>
 
 #include <boost/core/lightweight_test.hpp>
+#include <boost/core/lightweight_test_trait.hpp>
 
 using namespace xll;
 
@@ -17,14 +18,14 @@ int main()
     using namespace std::string_view_literals;
 
     {
-        // compile-time wide pstring literal
-        constexpr auto wide = make_wpstring_literal(L"Literal");
+        // compile-time wide pstring view
+        constexpr auto wide = make_wpstring_view(L"Literal");
         BOOST_TEST(std::wstring_view(wide) == L"Literal");
         BOOST_TEST_EQ(wide.size(), 7);
     }
     {
-        // compile-time narrow pstring literal
-        constexpr auto narrow = make_pstring_literal("Literal");
+        // compile-time narrow pstring view
+        constexpr auto narrow = make_pstring_view("Literal");
         BOOST_TEST(std::string_view(narrow) == "Literal");
         BOOST_TEST_EQ(narrow.size(), 7);
     }
@@ -41,6 +42,20 @@ int main()
         constexpr auto narrow = make_pstring_array(arr);
         BOOST_TEST(std::string_view(narrow) == "TEST");
         BOOST_TEST_EQ(narrow.size(), 4);
+    }
+    {
+        // narrow pstring literals
+        using namespace xll::pstring_literals;
+        auto ps = "Test"_ps;
+        BOOST_TEST_TRAIT_TRUE((std::is_same<decltype(ps), pstring>));
+        BOOST_TEST(ps == "Test"s);
+    }
+    {
+        // wide pstring literals
+        using namespace xll::pstring_literals;
+        auto wps = L"Test"_ps;
+        BOOST_TEST_TRAIT_TRUE((std::is_same<decltype(wps), wpstring>));
+        BOOST_TEST(wps == L"Test"s);
     }
     {
         // narrow pstring with no conversion

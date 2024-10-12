@@ -71,13 +71,18 @@ int main()
     BOOST_TEST_TRAIT_FALSE((std::is_same<detail::resolve_overload_type<bool, xlbool, xlint>, xlbool>));
 
     {
+        constexpr auto wps = make_wpstring_view(L"TEST");
+        variant v{static_cast<xlstr>(wps)};
+        BOOST_TEST_EQ(v.xltype(), xltypeStr);
+        BOOST_TEST_EQ(v.get<xlstr>(), L"TEST");
+    }
+    {
         variant v(L"TEST");
         BOOST_TEST_EQ(v.xltype(), xltypeStr);
         BOOST_TEST_EQ(v.get<xlstr>(), L"TEST");
         v.release();
         BOOST_TEST_EQ(v.xltype(), xltypeMissing);
     }
-
     {
         variant v1(L"TEST");
         variant v2(v1);
@@ -85,7 +90,6 @@ int main()
         BOOST_TEST_EQ(v2.xltype(), xltypeStr);
         BOOST_TEST_EQ(v2.get<xlstr>(), L"TEST");
     }
-
     {
         variant v1(L"TEST");
         variant v2(std::move(v1));
@@ -93,7 +97,6 @@ int main()
         BOOST_TEST_EQ(v2.xltype(), xltypeStr);
         BOOST_TEST_EQ(v2.get<xlstr>(), L"TEST");
     }
-
     {
         variant v1(L"TEST");
         v1.set_flags(xlbitDLLFree);
@@ -101,14 +104,12 @@ int main()
         BOOST_TEST_EQ(v1.xltype(), xltypeStr);
         BOOST_TEST_EQ(v1.get<xlstr>(), L"TEST");
     }
-
     {
         variant v1(L"TEST");
         v1.set_flags(xlbitDLLFree);
         variant v2(std::move(v1));
         BOOST_TEST_EQ(v1.xltype(), xltypeMissing);
     }
-
     {
         variant v(L"TEST");
         v.set_flags(xlbitDLLFree);
@@ -119,7 +120,6 @@ int main()
         v.release();
         BOOST_TEST_EQ(v.xltype(), xltypeMissing);
     }
-    
     {
         variant v(L"TEST");
         v.set_flags(xlbitXLFree);
@@ -130,39 +130,33 @@ int main()
         v.release();
         BOOST_TEST_EQ(v.xltype(), xltypeMissing);
     }
-
     {
         xlint x = 1;
         xlnum y(1.5);
         auto z = x + y;
         BOOST_TEST_EQ(z, 2.5);
     }
-
     {
         variant v(5);
         BOOST_TEST_EQ(v.xltype(), xltypeInt);
         BOOST_TEST_EQ(v.get<xlint>(), 5);
     }
-
     {
         variant v(10.5);
         BOOST_TEST_EQ(v.xltype(), xltypeNum);
         BOOST_TEST_EQ(v.get<xlnum>(), 10.5);
     }
-
     {
         variant v(error::xlerrValue);
         BOOST_TEST_EQ(v.xltype(), xltypeErr);
         BOOST_TEST_EQ(v.get<xlerr>(), error::xlerrValue);
     }
-
     {
         variant v;
         v = error::xlerrValue;
         BOOST_TEST_EQ(v.xltype(), xltypeErr);
         BOOST_TEST_EQ(v.get<xlerr>(), error::xlerrValue);
     }
-
     {
         variant v((xlbool)true);
         BOOST_TEST_EQ(v.xltype(), xltypeBool);
@@ -171,14 +165,12 @@ int main()
         BOOST_TEST_EQ(v.xltype(), xltypeBool);
         BOOST_TEST_EQ(v.get<xlbool>(), false);
     }
-
     {
         std::vector<variant> vv({ L"TEST1" });
         vv.emplace_back("TEST2");
         BOOST_TEST_EQ(vv.at(0).get<xlstr>(), "TEST1");
         BOOST_TEST_EQ(vv.at(1).get<xlstr>(), "TEST2");
     }
-
     {
         xlmulti m({{"S1", L"S2", 3}, {4}, {7, 8.1, 9}});
         BOOST_TEST_EQ(m.size(), 9);
